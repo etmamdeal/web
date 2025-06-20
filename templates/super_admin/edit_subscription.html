@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title or "Edit Subscription" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-edit me-2"></i>{{ title or "Edit Subscription" }}</h2>
+    </div>
+    <hr>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if subscription and user and product %}
+        <div class="mb-3">
+            <p><strong>User:</strong> {{ user.username }} ({{ user.email }})</p>
+            <p><strong>Product:</strong> {{ product.name }}</p>
+            <p><strong>Current Subscription ID:</strong> {{ subscription.id }}</p>
+        </div>
+        <hr>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('main.super_admin_edit_subscription', subscription_id=subscription.id) }}">
+        {{ form.hidden_tag() }} {# CSRF token and other hidden fields #}
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form.start_date.label(class="form-label") }}
+                    {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+                    {% if form.start_date.description %}
+                        <small class="form-text text-muted">{{ form.start_date.description }}</small>
+                    {% endif %}
+                    {% if form.start_date.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.start_date.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form.period_months.label(class="form-label") }}
+                    {{ form.period_months(class="form-control" + (" is-invalid" if form.period_months.errors else "")) }}
+                    {% if form.period_months.description %}
+                        <small class="form-text text-muted">{{ form.period_months.description }}</small>
+                    {% endif %}
+                    {% if form.period_months.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.period_months.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form.end_date.label(class="form-label") }}
+                    {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else ""), readonly=True) }}
+                     {% if form.end_date.description %}
+                        <small class="form-text text-muted">{{ form.end_date.description }}</small>
+                    {% endif %}
+                    {% if form.end_date.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.end_date.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3 form-check">
+            {{ form.is_active(class="form-check-input" + (" is-invalid" if form.is_active.errors else "")) }}
+            {{ form.is_active.label(class="form-check-label") }}
+            {% if form.is_active.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.is_active.errors %}<span>{{ error }}</span><br>{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <hr>
+        <div class="d-flex justify-content-end">
+            {{ form.submit(class="btn btn-primary me-2") }}
+            <a href="{{ url_for('main.super_admin_subscriptions') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

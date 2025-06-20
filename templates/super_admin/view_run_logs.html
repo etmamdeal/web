@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ title }}</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Log ID</th>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Script Name</th>
+                    <th>Status</th>
+                    <th>Input (Truncated)</th>
+                    <th>Output (Truncated)</th>
+                    <th>Error (Truncated)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if logs_pagination.items %}
+                    {% for log, user_username, script_product_name in logs_pagination.items %}
+                    <tr>
+                        <td>{{ log.id }}</td>
+                        <td>{{ log.executed_at.strftime('%Y-%m-%d %H:%M:%S UTC') if log.executed_at else 'N/A' }}</td>
+                        <td>{{ user_username }}</td>
+                        <td>{{ script_product_name }}</td>
+                        <td>
+                            {% if log.status == 'success' %}<span class="badge bg-success">Success</span>
+                            {% elif log.status == 'error' %}<span class="badge bg-danger">Error</span>
+                            {% elif log.status == 'timeout' %}<span class="badge bg-warning text-dark">Timeout</span>
+                            {% else %}<span class="badge bg-secondary">{{ log.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td><pre>{{ log.input_parameters|truncate(50, True, '...') if log.input_parameters else '' }}</pre></td>
+                        <td><pre>{{ log.output|truncate(50, True, '...') if log.output else '' }}</pre></td>
+                        <td><pre>{{ log.error|truncate(50, True, '...') if log.error else '' }}</pre></td>
+                        <td>
+                            {# Placeholder for the actual detail view route #}
+                            <a href="{{ url_for('main.super_admin_view_log_detail', log_id=log.id) }}" class="btn btn-sm btn-info" title="View Details"><i class="fas fa-eye"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center">No logs found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if logs_pagination.pages > 1 %}
+    <nav aria-label="Log navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not logs_pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('main.super_admin_run_logs', page=logs_pagination.prev_num) if logs_pagination.has_prev else '#'}}">Previous</a>
+            </li>
+            {% for page_num in logs_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if logs_pagination.page == page_num %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.super_admin_run_logs', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not logs_pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('main.super_admin_run_logs', page=logs_pagination.next_num) if logs_pagination.has_next else '#'}}">Next</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

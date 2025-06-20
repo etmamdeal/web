@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_form_macros.html" import render_field_with_description %} {# Assuming you might have or want a macro for cleaner forms #}
+
+{% block title %}{{ title or "Add New Subscription" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-plus-circle me-2"></i>{{ title or "Add New Subscription" }}</h2>
+    <hr>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('main.super_admin_add_subscription') }}">
+        {{ form.hidden_tag() }} {# CSRF token and other hidden fields #}
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form.user_id.label(class="form-label") }}
+                    {{ form.user_id(class="form-select" + (" is-invalid" if form.user_id.errors else "")) }}
+                    {% if form.user_id.description %}
+                        <small class="form-text text-muted">{{ form.user_id.description }}</small>
+                    {% endif %}
+                    {% if form.user_id.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.user_id.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form.product_id.label(class="form-label") }}
+                    {{ form.product_id(class="form-select" + (" is-invalid" if form.product_id.errors else "")) }}
+                     {% if form.product_id.description %}
+                        <small class="form-text text-muted">{{ form.product_id.description }}</small>
+                    {% endif %}
+                    {% if form.product_id.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.product_id.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form.period_months.label(class="form-label") }}
+                    {{ form.period_months(class="form-control" + (" is-invalid" if form.period_months.errors else "")) }}
+                    {% if form.period_months.description %}
+                        <small class="form-text text-muted">{{ form.period_months.description }}</small>
+                    {% endif %}
+                    {% if form.period_months.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.period_months.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form.start_date.label(class="form-label") }}
+                    {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+                    {% if form.start_date.description %}
+                        <small class="form-text text-muted">{{ form.start_date.description }}</small>
+                    {% endif %}
+                    {% if form.start_date.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.start_date.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <hr>
+        <div class="d-flex justify-content-end">
+            {{ form.submit(class="btn btn-primary me-2") }}
+            <a href="{{ url_for('main.super_admin_subscriptions') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

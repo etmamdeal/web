@@ -225,6 +225,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     image_url = db.Column(db.String(200), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
+    is_admin_only = db.Column(db.Boolean, default=False, nullable=False) # New column
     created_at = db.Column(db.DateTime, default=datetime.now)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     last_modified = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
@@ -249,14 +250,23 @@ class Subscription(db.Model):
     start_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     end_date = db.Column(db.DateTime, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow) # Changed default to utcnow for consistency
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) # Added field
     
     user = db.relationship('User', backref='subscriptions')
 
     def __init__(self, **kwargs):
         super(Subscription, self).__init__(**kwargs)
-        if not self.end_date:
+        if 'created_at' not in kwargs: # Ensure created_at is set if not provided
+            self.created_at = datetime.utcnow()
+        if not self.end_date: # Ensure end_date is calculated if not provided
+            # Ensure start_date is set before calculating end_date
+            if not self.start_date:
+                self.start_date = datetime.utcnow()
             self.end_date = self.start_date + timedelta(days=30 * self.period_months)
+        # Ensure updated_at is set on creation
+        self.updated_at = datetime.utcnow()
+
 
     @property
     def is_expired(self):

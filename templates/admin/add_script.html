@@ -62,6 +62,16 @@
                         </div>
                     {% endif %}
                 </div>
+
+                <div class="mb-3 form-check form-switch">
+                    {{ form.is_admin_only(class="form-check-input" + (" is-invalid" if form.is_admin_only.errors else ""), id="is_admin_only") }}
+                    {{ form.is_admin_only.label(class="form-check-label", for="is_admin_only") }}
+                    {% if form.is_admin_only.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.is_admin_only.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="col-md-6">

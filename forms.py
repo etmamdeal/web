@@ -1,6 +1,6 @@
 import json # Added for EditProductForm
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, BooleanField, SelectField, IntegerField # Added IntegerField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FloatField, BooleanField, SelectField, IntegerField, DateField # Added DateField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange, Optional # Added Optional
 from flask_login import current_user
 from .models import User, Product, ProductType
@@ -46,6 +46,7 @@ class EditProductForm(FlaskForm):
     description = TextAreaField('Description', validators=[DataRequired()])
     price = FloatField('Price (SAR)', validators=[DataRequired(), NumberRange(min=0)])
     is_active = BooleanField('Product Active (visible in store)')
+    is_admin_only = BooleanField('Admin-Only Product (visible only to admins)', default=False, validators=[Optional()])
     script_parameters = TextAreaField('Script Parameters (JSON)',
                                      description="عدّل معلمات السكربت إذا كان هذا المنتج سكربتًا. استخدم JSON غني لتحديد 'label', 'type', 'required', 'default', 'placeholder' لكل متغير. اتركها فارغة إذا لم تكن هناك حاجة لمتغيرات.",
                                      render_kw={"rows": 5})
@@ -108,6 +109,7 @@ class AddScriptForm(FlaskForm):
     script_file = FileField('ملف السكربت (Python .py)', validators=[FileRequired(), FileAllowed(['py'], 'ملفات Python فقط!')])
     parameters = TextAreaField('معلمات السكربت (بصيغة JSON)', validators=[Optional()], description='أدخل كائن JSON يصف المتغيرات. لكل متغير، يمكنك تحديد: \'label\' (اسم العرض)، \'type\' (مثل \'text\', \'number\', \'date\'), \'required\' (true/false)، \'default\' (قيمة افتراضية)، \'placeholder\' (نص مساعد). مثال: {"api_key": {"label": "مفتاح API", "type": "password", "required": true, "placeholder": "أدخل مفتاح API الخاص بك"}, "count": {"label": "العدد", "type": "number", "default": 10}}')
     is_active = BooleanField('تفعيل المنتج (جعله ظاهرًا في المتجر)', default=True)
+    is_admin_only = BooleanField('سكربت خاص بالمسؤولين (يظهر للمسؤولين فقط)', default=False, validators=[Optional()])
     submit = SubmitField('إضافة السكربت')
 
     def validate_parameters(self, parameters):
@@ -116,3 +118,28 @@ class AddScriptForm(FlaskForm):
                 json.loads(parameters.data)
             except json.JSONDecodeError:
                 raise ValidationError('صيغة JSON لمعلمات السكربت غير صحيحة.')
+
+
+class AddSubscriptionForm(FlaskForm):
+    user_id = SelectField('User', coerce=int, validators=[DataRequired()], description='Select the user to assign the subscription to.')
+    product_id = SelectField('Script Product', coerce=int, validators=[DataRequired()], description='Select the script product for the subscription.')
+    period_months = IntegerField('Subscription Period (Months)', validators=[DataRequired(), NumberRange(min=1)], default=1, description='Enter the duration of the subscription in months.')
+    start_date = DateField('Start Date (Optional)', validators=[Optional()], format='%Y-%m-%d', description='Leave blank for today. Format: YYYY-MM-DD.')
+    submit = SubmitField('Add Subscription')
+
+
+class EditSubscriptionForm(FlaskForm):
+    period_months = IntegerField('Subscription Period (Months)',
+                                 validators=[DataRequired(), NumberRange(min=1)],
+                                 description='Enter the new total duration of the subscription in months. End date will be recalculated from start date.')
+    start_date = DateField('Start Date',
+                           validators=[DataRequired()],
+                           format='%Y-%m-%d',
+                           description='Format: YYYY-MM-DD. Changing this will affect the end date based on the period.')
+    end_date = DateField('End Date (Calculated)',
+                         validators=[Optional()],
+                         format='%Y-%m-%d',
+                         render_kw={'readonly': True},
+                         description='This date is calculated based on start date and period. Adjust period or start date to change it.')
+    is_active = BooleanField('Is Active', validators=[Optional()], default=True) # Default to active, can be unchecked
+    submit = SubmitField('Update Subscription')

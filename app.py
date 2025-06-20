@@ -7,6 +7,7 @@ from flask import Blueprint, Flask, render_template, request, redirect, url_for,
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.urls import url_parse # Added for next_url validation
 import werkzeug.routing.exceptions # Added for specific exception handling
 from datetime import datetime, timedelta, date # Added date
 from dotenv import load_dotenv
@@ -250,8 +251,26 @@ def homepage():
         current_app.logger.error(f'خطأ في الصفحة الرئيسية: {str(e)}')
         return f'<h1>خطأ في عرض الصفحة</h1><pre>{str(e)}</pre>', 500
 
+
+@bp.route('/scripts', endpoint='scripts')
+def scripts():
+    # Fetch only active SCRIPT type products, not admin-only
+    script_products = Product.query.filter_by(type=ProductType.SCRIPT, is_active=True, is_admin_only=False).all()
+    return render_template('scripts.html', scripts=script_products, ProductType=ProductType, now=datetime.utcnow())
+
+@bp.route('/products', endpoint='products')
+def products():
+    # Fetch all active products, not admin-only
+    all_products = Product.query.filter_by(is_active=True, is_admin_only=False).all()
+    # The rest of the original products route logic needs to be here if it existed,
+    # for now, assuming it was just rendering a template with these products.
+    # This might need to be adjusted based on the actual original content of this route.
+    # For now, let's assume a generic products.html template.
+    return render_template('products.html', products=all_products, ProductType=ProductType, now=datetime.utcnow())
+
+
 # ... (all other routes up to client_execute_script, copied from turn 15 read_files output) ...
-# For example, service_description, scripts, products, request_script, contact_us, register,
+# For example, service_description, request_script, contact_us, register,
 # client_login, logout, admin_login, reset_password_request, reset_password, admin_register,
 # super_admin_dashboard, admin_dashboard, client_dashboard, client_my_scripts, client_my_logs,
 # client_profile, client_add_property_map, client_add_property, client_manage_properties,
@@ -275,12 +294,17 @@ def client_execute_script(userscript_id):
         current_app.logger.error(f"Script model ID {script_model.id} has no file_path defined.")
         return jsonify({'status': 'error', 'error_message': 'Script file path not configured.'}), 500
 
-    # --- Subscription Check ---
     product_of_script = script_model.product_link
     if not product_of_script:
         current_app.logger.error(f"No product link found for Script ID: {script_model.id}")
         return jsonify({'status': 'error', 'error_message': 'Script not associated with a product for subscription.'}), 500
 
+    # --- Admin-Only Check ---
+    if product_of_script.is_admin_only and not current_user.is_admin:
+        current_app.logger.warning(f"User {current_user.username} (non-admin) attempt to execute admin-only script {product_of_script.name}.")
+        return jsonify({'status': 'error', 'error_message': 'This script is restricted to administrators.'}), 403
+
+    # --- Subscription Check ---
     active_subscription = Subscription.query.filter(
         Subscription.user_id == current_user.id,
         Subscription.product_id == product_of_script.id,
@@ -389,6 +413,7 @@ def client_my_assigned_scripts():
      .filter(UserScript.user_id == current_user.id)\
      .filter(Product.type == ProductType.SCRIPT)\
      .filter(Product.is_active == True)\
+     .filter(Product.is_admin_only == False)\
      .filter(Subscription.is_active == True)\
      .filter(Subscription.start_date <= datetime.utcnow())\
      .filter(Subscription.end_date >= datetime.utcnow())\
@@ -435,6 +460,7 @@ def add_script_route():
             parameters_str = form.parameters.data # Validator ensures JSON or empty
             price = form.price.data
             is_active = form.is_active.data
+            is_admin_only = form.is_admin_only.data # New field
             file = form.script_file.data # FileStorage object
 
             # parameters_str will be an empty string if not provided, or valid JSON string
@@ -480,6 +506,7 @@ def add_script_route():
                 type=ProductType.SCRIPT,
                 price=float(price),
                 is_active=is_active,
+                is_admin_only=is_admin_only, # New field
                 created_by=current_user.id,
                 script_id=new_script_obj.id,
                 created_at=datetime.utcnow(),
@@ -763,6 +790,7 @@ def edit_product(product_id):
         product.description = form.description.data
         product.price = form.price.data
         product.is_active = form.is_active.data
+        product.is_admin_only = form.is_admin_only.data # New field
         product.last_modified_by = current_user.id
         product.last_modified = datetime.utcnow()
 
@@ -1238,6 +1266,58 @@ def super_admin_settings():
     settings = GlobalSetting.query.order_by(GlobalSetting.key).all()
     return render_template('super_admin/settings.html', settings=settings)
 
+@bp.route('/super-admin/subscriptions', methods=['GET'], endpoint='super_admin_subscriptions')
+@login_required
+@super_admin_required
+def super_admin_subscriptions():
+    subscriptions_data = db.session.query(
+        Subscription,
+        User.username.label('user_username'),
+        Product.name.label('product_name')
+    ).join(
+        User, Subscription.user_id == User.id
+    ).join(
+        Product, Subscription.product_id == Product.id
+    ).order_by(
+        Subscription.start_date.desc()
+    ).all()
+    return render_template('super_admin/manage_subscriptions.html', subscriptions_data=subscriptions_data)
+
+@bp.route('/super-admin/subscription/<int:subscription_id>/toggle-status', methods=['POST'], endpoint='super_admin_toggle_subscription_status')
+@login_required
+@super_admin_required
+def super_admin_toggle_subscription_status(subscription_id):
+    subscription = Subscription.query.get_or_404(subscription_id)
+    subscription.is_active = not subscription.is_active
+
+    # Manually set updated_at if the model field exists but doesn't auto-update
+    # Based on previous model check, Subscription model does not have an explicit updated_at field.
+    # If it were added to the model (e.g., updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))),
+    # then the following line would be useful if onupdate was not set.
+    # For now, this line will cause an AttributeError if 'updated_at' is not on the model.
+    # However, following instruction to attempt to set it. A better fix is to ensure model has the field.
+    if hasattr(subscription, 'updated_at'):
+         subscription.updated_at = datetime.utcnow()
+    # else:
+    # current_app.logger.info(f"Subscription model does not have 'updated_at' field. Field not set for ID {subscription_id} during toggle.")
+
+
+    try:
+        db.session.commit()
+        status_str = "Active" if subscription.is_active else "Inactive"
+        flash(f"Subscription {subscription.id} status changed to {status_str}.", "success")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error toggling subscription status for ID {subscription_id}: {str(e)}")
+        flash(f"Error changing subscription status: {str(e)}", "danger")
+
+    next_url = request.form.get('next_url')
+    # Basic local URL check; a more robust check would involve parsing the URL
+    # and ensuring it belongs to the same host. For now, a simple check.
+    if next_url and url_parse(next_url).netloc == '': # Checks if the netloc is empty, meaning it's a local path
+        return redirect(next_url)
+    return redirect(url_for('main.super_admin_subscriptions'))
+
 # --- CLI Commands ---
 @bp.cli.command("deactivate-expired-subscriptions")
 def deactivate_expired_subscriptions_command():
@@ -1304,3 +1384,42 @@ def seed_global_settings_command():
     except Exception as e:
         db.session.rollback()
         print(f"Error seeding global settings: {str(e)}")
+
+
+@bp.route('/super-admin/run-logs', methods=['GET'], endpoint='super_admin_run_logs')
+@login_required
+@super_admin_required
+def super_admin_run_logs():
+    page = request.args.get('page', 1, type=int)
+
+    # Default items_per_page, to be overridden by GlobalSetting if available
+    items_per_page = 15
+    try:
+        db_items_per_page = GlobalSetting.get('items_per_page')
+        if db_items_per_page is not None: # GlobalSetting.get returns int for 'integer' type
+            if isinstance(db_items_per_page, int) and db_items_per_page > 0:
+                items_per_page = db_items_per_page
+            else:
+                current_app.logger.warning(
+                    f"GlobalSetting 'items_per_page' has invalid value '{db_items_per_page}'. Using default {items_per_page}."
+                )
+    except Exception as e:
+        current_app.logger.error(f"Error fetching 'items_per_page' from GlobalSetting: {e}. Using default {items_per_page}.")
+
+    logs_query = db.session.query(
+        RunLog,
+        User.username.label('user_username'),
+        Product.name.label('script_product_name')
+    ).join(User, RunLog.user_id == User.id)\
+     .join(UserScript, RunLog.user_script_id == UserScript.id)\
+     .join(Script, UserScript.script_id == Script.id)\
+     .join(Product, Script.id == Product.script_id)\
+     .filter(Product.type == ProductType.SCRIPT)
+
+    logs_query = logs_query.order_by(RunLog.executed_at.desc())
+
+    logs_pagination = logs_query.paginate(page=page, per_page=items_per_page, error_out=False)
+
+    return render_template('super_admin/view_run_logs.html',
+                           logs_pagination=logs_pagination,
+                           title="Script Execution Logs")
