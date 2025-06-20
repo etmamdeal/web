@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Global Application Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-cogs me-2"></i>Global Application Settings</h2>
+    <hr>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('main.super_admin_settings') }}">
+        {{ csrf_token() }} {# Assuming csrf_token() is available in template context via app_context_processor #}
+
+        {% for setting in settings %}
+        <div class="mb-3">
+            <label for="setting-{{ setting.key }}" class="form-label">
+                {{ setting.description or setting.key.replace('_', ' ')|capitalize }}
+            </label>
+
+            {% if setting.value_type == 'boolean' %}
+                <select name="{{ setting.key }}" id="setting-{{ setting.key }}" class="form-select">
+                    <option value="true" {% if setting.value|lower == 'true' %}selected{% endif %}>True (مفعل)</option>
+                    <option value="false" {% if setting.value|lower == 'false' or not setting.value %}selected{% endif %}>False (غير مفعل)</option>
+                </select>
+            {% elif setting.value_type == 'integer' %}
+                <input type="number" name="{{ setting.key }}" id="setting-{{ setting.key }}" value="{{ setting.value }}" class="form-control">
+            {% elif setting.value_type == 'json' or setting.value_type == 'text' %}
+                <textarea name="{{ setting.key }}" id="setting-{{ setting.key }}" class="form-control" rows="5">{{ setting.value }}</textarea>
+            {% else %} {# Default to string type #}
+                <input type="text" name="{{ setting.key }}" id="setting-{{ setting.key }}" value="{{ setting.value }}" class="form-control">
+            {% endif %}
+
+            {% if setting.description and (setting.description != setting.key.replace('_', ' ')|capitalize) %}
+                 <small class="form-text text-muted">Key: <code>{{ setting.key }}</code></small>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <hr>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Settings</button>
+        <a href="{{ url_for('main.super_admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-times-circle me-2"></i>Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}منصة إتمام{% endblock %}</title>
+    <title>{% block title %}{{ site_name|default('منصة إتمام') }}{% endblock %}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <!-- Bootstrap RTL -->
@@ -22,7 +22,7 @@
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('main.homepage') }}">
-                <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="إتمام" height="40">
+                <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="{{ site_name|default('إتمام') }}" height="40">
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -156,7 +156,7 @@
     <!-- Footer -->
     <footer class="bg-dark text-light py-4 mt-5">
         <div class="container text-center">
-            <p>جميع الحقوق محفوظة &copy; {{ now.year }} منصة إتمام</p>
+            <p>جميع الحقوق محفوظة &copy; {{ now.year }} {{ site_name|default('منصة إتمام') }}</p>
             <div class="mt-2">
                 <a href="#" class="text-light mx-2"><i class="fab fa-twitter"></i></a>
                 <a href="#" class="text-light mx-2"><i class="fab fa-linkedin"></i></a>
