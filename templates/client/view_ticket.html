@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}عرض التذكرة #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3><i class="fas fa-ticket-alt me-2"></i>التذكرة #{{ ticket.id }}: {{ ticket.subject }}</h3>
+        <a href="{{ url_for('main.client_list_tickets') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>العودة إلى قائمة التذاكر
+        </a>
+    </div>
+    <hr>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Ticket Messages -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">سجل الرسائل</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="mb-3 pb-3 border-bottom">
+                            <p>
+                                <strong>
+                                    {% if message.user_id == current_user.id %}
+                                        <i class="fas fa-user-circle me-1 text-primary"></i>أنا
+                                    {% else %}
+                                        <i class="fas fa-user-shield me-1 text-success"></i>الدعم الفني
+                                    {% endif %}
+                                </strong>
+                                <small class="text-muted float-end">{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </p>
+                            <p style="white-space: pre-wrap;">{{ message.message_body }}</p>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">لا توجد رسائل لهذه التذكرة بعد. يمكنك إضافة رسالة أدناه.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Client Reply Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">إضافة رد</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.client_view_ticket', ticket_id=ticket.id) }}">
+                        {{ csrf_token() }} {# If Flask-WTF is used #}
+                        <div class="mb-3">
+                            <label for="message_body" class="form-label">رسالتك:</label>
+                            <textarea class="form-control" id="message_body" name="message_body" rows="5" required placeholder="اكتب ردك هنا..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>إرسال الرد</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket Details Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">تفاصيل التذكرة</h5></div>
+                <div class="card-body">
+                    <p><strong>نوع التذكرة:</strong>
+                        {% if ticket.ticket_type == 'technical' %}دعم فني
+                        {% elif ticket.ticket_type == 'billing' %}استفسارات الفواتير
+                        {% elif ticket.ticket_type == 'general_inquiry' %}استفسار عام
+                        {% else %}{{ ticket.ticket_type }}{% endif %}
+                    </p>
+                    <p><strong>الحالة:</strong>
+                        <span class="badge
+                            {% if ticket.status == 'open' %}bg-success
+                            {% elif ticket.status == 'in_progress' %}bg-warning text-dark
+                            {% elif ticket.status == 'closed' %}bg-secondary
+                            {% elif ticket.status == 'resolved' %}bg-primary
+                            {% else %}bg-light text-dark{% endif %}">
+                            {% if ticket.status == 'open' %}مفتوحة
+                            {% elif ticket.status == 'in_progress' %}قيد المعالجة
+                            {% elif ticket.status == 'closed' %}مغلقة
+                            {% elif ticket.status == 'resolved' %}تم الحل
+                            {% else %}{{ ticket.status }}{% endif %}
+                        </span>
+                    </p>
+                    <p><strong>الأولوية:</strong>
+                        {% if ticket.priority == 'low' %}منخفضة
+                        {% elif ticket.priority == 'medium' %}متوسطة
+                        {% elif ticket.priority == 'high' %}عالية
+                        {% elif ticket.priority == 'urgent' %}عاجلة
+                        {% else %}{{ ticket.priority }}{% endif %}
+                    </p>
+                    <p><strong>تاريخ الإنشاء:</strong> {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p><strong>آخر تحديث:</strong> {{ ticket.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <hr>
+                    <h6>الوصف الأصلي:</h6>
+                    <p style="white-space: pre-wrap;">{{ ticket.description }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

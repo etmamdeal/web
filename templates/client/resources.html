@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}موارد و سكربتات البيع - لوحة تحكم الوسيط{% endblock %}
+
+{% block styles %}
+<style>
+    .resource-section {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.075);
+        margin-bottom: 2rem;
+    }
+    .resource-section h4 {
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: .75rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    .resource-section h4 i {
+        margin-right: 0.75rem;
+    }
+    .resource-section h5 {
+        color: #343a40;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .resource-section p, .resource-section li {
+        color: #495057;
+        line-height: 1.8;
+    }
+    .script-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        padding: 1.25rem;
+        border-radius: .3rem;
+        margin-bottom: 1rem;
+    }
+    .script-box h6 {
+        font-weight: bold;
+        color: #0056b3; /* A slightly darker blue for emphasis */
+    }
+    .script-box p {
+        font-family: 'Courier New', Courier, monospace;
+        white-space: pre-wrap;
+        margin-bottom: 0;
+        font-size: 0.95em;
+    }
+    .link-list .list-group-item {
+        border-color: rgba(0,0,0,0.075);
+    }
+    .link-list .list-group-item a {
+        text-decoration: none;
+        color: var(--primary-color);
+        font-weight: 500;
+    }
+    .link-list .list-group-item a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-book-reader me-2"></i>سكربتات البيع والموارد التعليمية</h2>
+        <a href="{{ url_for('main.client_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>العودة إلى لوحة التحكم
+        </a>
+    </div>
+
+    <section class="resource-section">
+        <h4><i class="fas fa-comments-dollar"></i>نماذج سكربتات البيع</h4>
+
+        <h5>1. مكالمة الاكتشاف الأولية (العميل المحتمل البارد)</h5>
+        <div class="script-box">
+            <h6>الهدف: بناء الألفة، فهم الاحتياجات، تحديد موعد.</h6>
+            <p>
+<strong>أنت:</strong> "مرحباً [اسم العميل المحتمل]، معك [اسمك] من [شركتك]. أتصل بك اليوم لأنني لاحظت أنك قد تكون مهتمًا بـ [سبب الاتصال، مثال: بيع عقارك / البحث عن عقار في منطقة X]. هل هذا وقت مناسب للحديث لمدة دقيقتين؟"
+<br><em>(إذا كان الجواب نعم)</em>
+<br><strong>أنت:</strong> "رائع. لمساعدتك بشكل أفضل، هل يمكنني أن أسألك سريعًا عن [سؤال رئيسي، مثال: ما الذي دفعك للتفكير في بيع عقارك الآن؟ / ما هي أهم ثلاثة أشياء تبحث عنها في عقار جديد؟]"
+<br><em>(... استمع جيدًا، دون ملاحظات ...)</em>
+<br><strong>أنت:</strong> "هذا مفيد جدًا. بناءً على ما ذكرت، أعتقد أن لدينا بعض الخيارات/الاستراتيجيات التي قد تهمك. هل أنت متاح للقاء قصير يوم [يوم مقترح] أو [يوم آخر مقترح] لمناقشة هذا بمزيد من التفصيل؟"
+            </p>
+        </div>
+
+        <h5>2. عرض العقار (أثناء الجولة)</h5>
+        <div class="script-box">
+            <h6>الهدف: إبراز الميزات، ربطها باحتياجات العميل، الإجابة على الأسئلة.</h6>
+            <p>
+<strong>أنت:</strong> "مرحبًا بك في [عنوان العقار]! كما ترى، هذه غرفة المعيشة الرئيسية، وتتميز بـ [ميزة 1 مثل: نوافذ كبيرة توفر إضاءة طبيعية / مساحة مفتوحة]. ذكرت أنك تبحث عن [احتياج العميل مثل: مساحة للترفيه]، أليس كذلك؟ هذه الغرفة مثالية لذلك."
+<br><em>(... انتقل عبر العقار، مشيرًا إلى الميزات الرئيسية ...)</em>
+<br><strong>أنت (عند المطبخ مثلاً):</strong> "المطبخ تم تحديثه مؤخرًا بـ [ميزة مثل: أسطح من الجرانيت / أجهزة جديدة]. هل تستمتع بالطبخ؟"
+<br><em>(... اجعلها محادثة، وليس مجرد عرض ...)</em>
+<br><strong>أنت (في النهاية):</strong> "حسنًا، هذه كانت جولة سريعة. ما هي انطباعاتك الأولية؟ هل هناك أي أسئلة محددة لديك حول العقار أو المنطقة المحيطة؟"
+            </p>
+        </div>
+
+        <h5>3. التعامل مع الاعتراضات (مثال: السعر مرتفع)</h5>
+        <div class="script-box">
+            <h6>الهدف: فهم الاعتراض، تقديم قيمة، إعادة صياغة.</h6>
+            <p>
+<strong>العميل:</strong> "العقار رائع، لكن السعر يبدو مرتفعًا بعض الشيء."
+<br><strong>أنت:</strong> "أتفهم وجهة نظرك بخصوص السعر. هل يمكنني أن أسألك ما هو السعر الذي كنت تتوقعه أو ما الذي تقارنه به؟"
+<br><em>(... استمع لفهم الأساس ...)</em>
+<br><strong>أنت:</strong> "شكرًا للتوضيح. من المهم أن نأخذ في الاعتبار أن هذا العقار يتميز بـ [ميزة فريدة 1]، [ميزة فريدة 2]، بالإضافة إلى موقعه المتميز في [ميزة الموقع]. عند مقارنته بالعقارات الأخرى التي قد لا تحتوي على هذه الميزات، فإن السعر يعكس القيمة المضافة. هل ترى كيف يمكن لهذه العوامل أن تبرر السعر؟"
+<br><em>(أو)</em>
+<br><strong>أنت:</strong> "أتفهم. دعنا نراجع معًا العقارات المماثلة التي تم بيعها مؤخرًا في المنطقة لنرى كيف يتناسب هذا السعر. في بعض الأحيان، يمكن أن يكون هناك مجال للتفاوض. هل أنت مستعد لتقديم عرض إذا تمكنا من التوصل إلى سعر يرضيك؟"
+            </p>
+        </div>
+         <h5>4. طلب الإغلاق (بعد إشارات شراء إيجابية)</h5>
+        <div class="script-box">
+            <h6>الهدف: جعل الخطوة التالية واضحة وسهلة.</h6>
+            <p>
+<strong>أنت:</strong> "يبدو أنك معجب جدًا بـ [ميزة رئيسية] و [ميزة أخرى]. بناءً على كل ما ناقشناه، هل تشعر أن هذا العقار يلبي احتياجاتك؟"
+<br><em>(إذا كان الجواب إيجابيًا)</em>
+<br><strong>أنت:</strong> "رائع! الخطوة التالية هي [اشرح الخطوة، مثال: تقديم عرض رسمي / توقيع عقد الحجز]. هل أنت مستعد للمضي قدمًا بذلك اليوم؟ يمكنني إعداد الأوراق اللازمة الآن."
+            </p>
+        </div>
+    </section>
+
+    <section class="resource-section">
+        <h4><i class="fas fa-graduation-cap"></i>موارد تعليمية</h4>
+        <h5>نصائح للتفاوض الفعال:</h5>
+        <ul>
+            <li>قم ببحثك: اعرف السوق جيدًا وقيمة العقار.</li>
+            <li>استمع أكثر مما تتكلم: افهم دوافع الطرف الآخر.</li>
+            <li>ركز على المصالح، وليس المواقف.</li>
+            <li>كن مستعدًا للانسحاب (ولكن اعرف متى).</li>
+            <li>حافظ على هدوئك واحترافك دائمًا.</li>
+        </ul>
+
+        <h5>أفضل ممارسات التواصل مع العملاء:</h5>
+        <ul>
+            <li>كن سريع الاستجابة للرسائل والمكالمات.</li>
+            <li>قدم معلومات دقيقة وصادقة دائمًا.</li>
+            <li>قم بتخصيص تواصلك لكل عميل.</li>
+            <li>اطلب ملاحظاتهم وقم بالاستماع إليها بفعالية.</li>
+            <li>حافظ على تواصل منتظم ولكن غير مزعج.</li>
+        </ul>
+
+        <h5>روابط مفيدة (أمثلة):</h5>
+        <ul class="list-group link-list">
+            <li class="list-group-item"><a href="#" target="_blank" rel="noopener noreferrer">الهيئة العامة للعقار (السعودية) - للأنظمة والتشريعات (رابط وهمي)</a></li>
+            <li class="list-group-item"><a href="#" target="_blank" rel="noopener noreferrer">مدونة نصائح للوسطاء العقاريين (رابط وهمي)</a></li>
+            <li class="list-group-item"><a href="#" target="_blank" rel="noopener noreferrer">مؤشرات السوق العقاري (رابط لجهة موثوقة - وهمي)</a></li>
+        </ul>
+        <p class="mt-2"><small>ملاحظة: الروابط أعلاه هي أمثلة، يرجى البحث عن المصادر الرسمية والموثوقة في منطقتك.</small></p>
+    </section>
+
+</div>
+{% endblock %}

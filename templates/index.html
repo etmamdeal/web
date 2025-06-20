@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}منصة إتمام - الرئيسية{% endblock %}
+
+{% block content %}
+<div class="row align-items-center py-5">
+    <!-- Hero Section -->
+    <div class="col-lg-6 text-center text-lg-end">
+        <h1 class="display-4 fw-bold mb-4">منصة إتمام</h1>
+        <h2 class="h3 mb-4">أتمتة الصفقات العقارية بكل سهولة</h2>
+        <p class="lead mb-4">منصة متكاملة تتيح لك رفع وإدارة سكربتات Python لأتمتة أعمالك بكل احترافية</p>
+        <div class="d-grid gap-2 d-md-block">
+            <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg mb-2 mb-md-0">
+                <i class="fas fa-user-plus"></i> تسجيل جديد
+            </a>
+            <a href="{{ url_for('main.client_login') }}" class="btn btn-outline-primary btn-lg mb-2 mb-md-0">
+                <i class="fas fa-sign-in-alt"></i> دخول العميل
+            </a>
+            <a href="{{ url_for('main.admin_login') }}" class="btn btn-outline-dark btn-lg">
+                <i class="fas fa-user-shield"></i> دخول المشرف
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-6 text-center">
+        <img src="{{ url_for('static', filename='images/hero.svg') }}" alt="إتمام" class="img-fluid">
+    </div>
+</div>
+
+<!-- Features Section -->
+<section class="py-5">
+    <h2 class="text-center mb-5">مميزات المنصة</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                    <h3 class="h4 mb-3">أتمتة ذكية</h3>
+                    <p>تشغيل سكربتات Python بشكل آلي وآمن مع إمكانية الجدولة</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                    <h3 class="h4 mb-3">حماية متكاملة</h3>
+                    <p>نظام أمان متقدم لحماية سكربتاتك وبياناتك</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                    <h3 class="h4 mb-3">تقارير مفصلة</h3>
+                    <p>متابعة أداء السكربتات ونتائج التشغيل بشكل لحظي</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">كيف تعمل المنصة؟</h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="circle-step mb-3">1</div>
+                    <h4>سجل حساب</h4>
+                    <p>أنشئ حسابك في المنصة بخطوات بسيطة</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="circle-step mb-3">2</div>
+                    <h4>ارفع سكربت</h4>
+                    <p>ارفع سكربت Python الخاص بك</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="circle-step mb-3">3</div>
+                    <h4>اضبط الإعدادات</h4>
+                    <p>حدد إعدادات وجدولة التشغيل</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="circle-step mb-3">4</div>
+                    <h4>تابع النتائج</h4>
+                    <p>راقب أداء السكربت والنتائج</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">تواصل معنا</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-0 shadow">
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4 text-center">
+                                <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                                <h5>البريد الإلكتروني</h5>
+                                <p>ai_agents@etmamdeal.com</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <i class="fas fa-phone fa-2x text-primary mb-2"></i>
+                                <h5>الهاتف</h5>
+                                <p>+966505772112</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <i class="fas fa-map-marker-alt fa-2x text-primary mb-2"></i>
+                                <h5>العنوان</h5>
+                                <p>المملكة العربية السعودية</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% block extra_css %}
+<style>
+.circle-step {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin: 0 auto;
+}
+</style>
+{% endblock %}
+{% endblock %}

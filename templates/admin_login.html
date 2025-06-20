@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل دخول المشرف{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0 text-center">تسجيل دخول المشرف</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-danger">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-4">
+                            <label class="form-label">اسم المستخدم</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">كلمة المرور</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" name="password" id="password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-right: none;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول
+                            </button>
+                        </div>
+
+                        <div class="text-center mb-4">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal" class="text-decoration-none">
+                                نسيت كلمة المرور؟
+                            </a>
+                        </div>
+
+                        <hr>
+
+                        <div class="text-center">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#registerAdminModal" class="btn btn-outline-primary">
+                                <i class="fas fa-user-plus me-2"></i>إنشاء حساب مشرف جديد
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal نسيت كلمة المرور -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">استعادة كلمة المرور</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('main.reset_password_request') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" name="email" required>
+                        <div class="form-text">سيتم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إرسال رابط الاستعادة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إنشاء حساب مشرف -->
+<div class="modal fade" id="registerAdminModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إنشاء حساب مشرف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('main.admin_register') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">الاسم الكامل</label>
+                        <input type="text" class="form-control" name="full_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم المستخدم</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم الجوال</label>
+                        <input type="tel" class="form-control" name="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="password" id="registerPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('registerPassword')" style="border-right: none;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">تأكيد كلمة المرور</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="confirm_password" id="confirmPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('confirmPassword')" style="border-right: none;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إنشاء الحساب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.input-group .btn-outline-secondary {
+    z-index: 0;
+}
+.input-group .btn-outline-secondary:focus {
+    box-shadow: none;
+}
+.input-group .btn-outline-secondary:hover {
+    background-color: transparent;
+}
+.input-group .btn-outline-secondary i {
+    color: #6c757d;
+}
+.input-group .form-control:focus {
+    z-index: 1;
+}
+.input-group .btn-outline-secondary:hover i {
+    color: #000;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // إظهار/إخفاء كلمة المرور في نموذج تسجيل الدخول
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+
+    // دالة عامة لإظهار/إخفاء كلمة المرور
+    window.togglePasswordVisibility = function(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = event.currentTarget.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    // التحقق من تطابق كلمتي المرور في نموذج التسجيل
+    document.querySelector('#registerAdminModal form').addEventListener('submit', function(e) {
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            alert('كلمتا المرور غير متطابقتين');
+        }
+    });
+});
+</script>
+{% endblock %}

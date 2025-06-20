@@ -1,0 +1,69 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">{{ script.name }}</h1>
+    
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">تفاصيل السكربت</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>الوصف:</strong>
+                        <p>{{ script.description or 'لا يوجد وصف' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>تاريخ الإضافة:</strong>
+                        <p>{{ script.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">تشغيل السكربت</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% for param in script.parameters %}
+                        <div class="form-group">
+                            <label for="{{ param.name }}">{{ param.name }}</label>
+                            <input type="text" class="form-control" id="{{ param.name }}" 
+                                   name="{{ param.name }}" required>
+                        </div>
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play"></i> تشغيل
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            {% if result %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">نتيجة التنفيذ</h6>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 rounded">{{ result }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <a href="{{ url_for('list_scripts') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> عودة للقائمة
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

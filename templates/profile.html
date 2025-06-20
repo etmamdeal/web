@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}الملف الشخصي{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>الملف الشخصي</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            <div class="avatar-lg bg-light rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center">
+                                <span class="h3 mb-0">{{ user.full_name[:2] }}</span>
+                            </div>
+                            <div class="badge bg-{{ 'success' if user.is_active else 'danger' }} mb-2">
+                                {{ 'نشط' if user.is_active else 'غير نشط' }}
+                            </div>
+                            {% if user.is_admin %}
+                            <div class="badge bg-primary">مشرف</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <form id="profileForm" method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+                                <div class="mb-3">
+                                    <label class="form-label">الاسم الكامل</label>
+                                    <input type="text" class="form-control" name="full_name" value="{{ user.full_name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">اسم المستخدم</label>
+                                    <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">رقم الهاتف</label>
+                                    <input type="tel" class="form-control" name="phone" value="{{ user.phone }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">كلمة المرور الجديدة</label>
+                                    <input type="password" class="form-control" name="password" placeholder="اترك فارغاً إذا لا تريد التغيير">
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>حفظ التغييرات
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="fas fa-clock me-2"></i>تاريخ التسجيل</h6>
+                                    <p class="card-text">{{ user.created_at|default('غير متوفر') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="fas fa-shield-alt me-2"></i>الصلاحيات</h6>
+                                    <p class="card-text">{{ 'مشرف النظام' if user.is_admin else 'مستخدم عادي' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- سكربت للتحقق من صحة النموذج -->
+<script>
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    const password = document.querySelector('input[name="password"]').value;
+    if (password && password.length < 6) {
+        e.preventDefault();
+        alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+    }
+});
+</script>
+{% endblock %} 

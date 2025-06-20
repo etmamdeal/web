@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}سكربتاتي - منصة إتمام{% endblock %}
+
+{% block styles %}
+<style>
+.script-name {
+    max-width: 300px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+.script-description {
+    max-width: 400px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+.script-status {
+    width: 100px;
+    text-align: center;
+}
+.script-actions {
+    width: 150px;
+    text-align: center;
+}
+.tooltip-inner {
+    max-width: 300px;
+}
+.code-preview {
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    tab-size: 4;
+    white-space: pre;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0">
+                <i class="fas fa-code me-2"></i>
+                سكربتاتي
+            </h2>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {% if scripts %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>اسم السكربت</th>
+                                <th>الوصف</th>
+                                <th>الحالة</th>
+                                <th>آخر تشغيل</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user_script in scripts %}
+                            <tr>
+                                <td class="script-name">
+                                    <div data-bs-toggle="tooltip" data-bs-placement="top" title="{{ user_script.script.name }}">
+                                        {{ user_script.script.name }}
+                                    </div>
+                                </td>
+                                <td class="script-description">
+                                    <div data-bs-toggle="tooltip" data-bs-placement="top" title="{{ user_script.script.description }}">
+                                        {{ user_script.script.description }}
+                                    </div>
+                                </td>
+                                <td class="script-status">
+                                    <span class="badge bg-{{ 'success' if user_script.script.is_active else 'warning' }}">
+                                        {{ 'نشط' if user_script.script.is_active else 'معلق' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if user_script.last_run %}
+                                        {{ user_script.last_run.strftime('%Y-%m-%d %H:%M') }}
+                                        <span class="badge bg-{{ 'success' if user_script.last_run_status == 'success' else 'danger' }}">
+                                            {{ 'ناجح' if user_script.last_run_status == 'success' else 'فاشل' }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">لم يتم التشغيل بعد</span>
+                                    {% endif %}
+                                </td>
+                                <td class="script-actions">
+                                    <div class="btn-group">
+                                        <!-- زر تشغيل السكربت -->
+                                        <button type="button" class="btn btn-sm btn-success" 
+                                                onclick="runScript('{{ user_script.script.id }}')"
+                                                {{ 'disabled' if not user_script.script.is_active }}
+                                                title="{{ 'تشغيل السكربت' if user_script.script.is_active else 'السكربت غير نشط' }}">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+
+                                        <!-- زر معاينة السكربت -->
+                                        <button type="button" class="btn btn-sm btn-info" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#previewModal{{ user_script.script.id }}"
+                                                title="معاينة السكربت">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+
+                                        <!-- زر سجل التشغيل -->
+                                        <button type="button" class="btn btn-sm btn-secondary" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#logsModal{{ user_script.script.id }}"
+                                                title="سجل التشغيل">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Modal معاينة السكربت -->
+                                    <div class="modal fade" id="previewModal{{ user_script.script.id }}" tabindex="-1">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">معاينة السكربت</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <h6>اسم السكربت</h6>
+                                                        <p>{{ user_script.script.name }}</p>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <h6>الوصف</h6>
+                                                        <p>{{ user_script.script.description }}</p>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <h6>الكود</h6>
+                                                        <pre class="code-preview"><code class="language-python">{{ user_script.script.code }}</code></pre>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal سجل التشغيل -->
+                                    <div class="modal fade" id="logsModal{{ user_script.script.id }}" tabindex="-1">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">سجل تشغيل السكربت</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    {% if user_script.run_logs %}
+                                                        <div class="table-responsive">
+                                                            <table class="table">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>التاريخ</th>
+                                                                        <th>الحالة</th>
+                                                                        <th>النتيجة</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {% for log in user_script.run_logs %}
+                                                                    <tr>
+                                                                        <td>{{ log.executed_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                                        <td>
+                                                                            <span class="badge bg-{{ 'success' if log.status == 'success' else 'danger' }}">
+                                                                                {{ 'ناجح' if log.status == 'success' else 'فاشل' }}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            {% if log.output %}
+                                                                                <pre class="mb-0"><code>{{ log.output }}</code></pre>
+                                                                            {% endif %}
+                                                                            {% if log.error %}
+                                                                                <pre class="mb-0 text-danger"><code>{{ log.error }}</code></pre>
+                                                                            {% endif %}
+                                                                        </td>
+                                                                    </tr>
+                                                                    {% endfor %}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    {% else %}
+                                                        <p class="text-muted text-center">لا يوجد سجلات تشغيل حتى الآن</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-code fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">لا يوجد سكربتات مخصصة لك حتى الآن</h4>
+                    <p class="text-muted">سيقوم المشرف بتخصيص السكربتات لك قريباً</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+<script>
+// تفعيل التلميحات
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+});
+
+// تنسيق الكود
+document.addEventListener('DOMContentLoaded', function() {
+    Prism.highlightAll();
+});
+
+// دالة تشغيل السكربت
+async function runScript(scriptId) {
+    if (!confirm('هل أنت متأكد من تشغيل السكربت؟')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/run_script/${scriptId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('تم تشغيل السكربت بنجاح: ' + data.result);
+            location.reload();
+        } else {
+            alert('خطأ في تشغيل السكربت: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء تشغيل السكربت');
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+{% endblock %} 

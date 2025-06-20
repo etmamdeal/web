@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <!-- Background -->
+  <rect width="600" height="400" fill="#f8f9fa" opacity="0.5"/>
+  
+  <!-- Laptop Base -->
+  <path d="M150 200 L450 200 L500 300 L100 300 Z" fill="#2b8c31"/>
+  
+  <!-- Laptop Screen -->
+  <rect x="175" y="100" width="250" height="150" rx="10" fill="#ffffff" stroke="#2b8c31" stroke-width="4"/>
+  
+  <!-- Code Lines -->
+  <g fill="none" stroke="#333333" stroke-width="2">
+    <line x1="200" y1="130" x2="300" y2="130"/>
+    <line x1="200" y1="150" x2="350" y2="150"/>
+    <line x1="200" y1="170" x2="280" y2="170"/>
+    <line x1="200" y1="190" x2="320" y2="190"/>
+  </g>
+  
+  <!-- Gears -->
+  <g transform="translate(380,140)" fill="#2b8c31">
+    <circle cx="0" cy="0" r="20"/>
+    <circle cx="35" cy="-10" r="15"/>
+    <path d="M-8,-8 L8,8 M-8,8 L8,-8" stroke="#ffffff" stroke-width="3"/>
+  </g>
+  
+  <!-- Python Logo -->
+  <g transform="translate(220,140)">
+    <path d="M-15,0 C-15,-15 15,-15 15,0 C15,15 -15,15 -15,0" fill="#306998"/>
+    <path d="M-10,-5 L10,-5 L0,10 Z" fill="#FFD43B"/>
+  </g>
+  
+  <!-- Decorative Elements -->
+  <circle cx="150" cy="150" r="5" fill="#0077cc"/>
+  <circle cx="450" cy="150" r="5" fill="#0077cc"/>
+  <circle cx="300" cy="250" r="5" fill="#0077cc"/>
+  
+  <!-- Arabic Text -->
+  <style>
+    .arabic-text { font-family: 'Questv1', Arial; font-size: 24px; fill: #2b8c31; }
+  </style>
+  <text x="300" y="350" text-anchor="middle" class="arabic-text" transform="scale(-1,1)" direction="rtl">
+    منصة إتمام
+  </text>
+</svg>

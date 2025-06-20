@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}السكربتات المخصصة لي{% endblock %} {# My Assigned Scripts #}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .script-card {
+        border: 1px solid #e0e0e0;
+        border-radius: .25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,.05);
+    }
+    .script-card-header {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .script-card-header h5 {
+        margin-bottom: 0;
+    }
+    .script-card-body {
+        padding: 1.25rem;
+    }
+    .logs-section {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px dashed #eee;
+    }
+    .logs-section h6 {
+        margin-bottom: 0.5rem;
+        color: #555;
+    }
+    .log-entry {
+        font-size: 0.85rem;
+        padding: 0.3rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .log-entry:last-child {
+        border-bottom: none;
+    }
+    .log-status-badge {
+        min-width: 70px; /* For consistent badge width */
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-rocket me-2"></i>السكربتات المخصصة لي</h2>
+        <a href="{{ url_for('main.client_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>العودة إلى لوحة التحكم
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if assigned_scripts %}
+        <div class="row">
+            {% for script_item in assigned_scripts %}
+            <div class="col-md-12"> {# Or col-md-6 for two columns, adjust as needed #}
+                <div class="script-card">
+                    <div class="script-card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">{{ script_item.product_name }}</h5>
+                        <button type="button" class="btn btn-primary execute-script-btn"
+                                data-userscript-id="{{ script_item.userscript_id }}"
+                                data-script-id="{{ script_item.script_id }}"
+                                data-script-name="{{ script_item.product_name | escape }}"
+                                data-script-params-def="{{ script_item.script_parameters_definition_json | escape }}"
+                                data-bs-toggle="modal" data-bs-target="#executeScriptModal">
+                            <i class="fas fa-play me-2"></i>تشغيل السكربت {# Execute Script #}
+                        </button>
+                    </div>
+                    <div class="script-card-body">
+                        <p class="card-text">{{ script_item.product_description }}</p>
+
+                        {% if script_item.last_logs %}
+                        <div class="logs-section">
+                            <h6><i class="fas fa-history me-2"></i>آخر سجلات التشغيل (أحدث 3):</h6>
+                            <ul class="list-unstyled">
+                                {% for log in script_item.last_logs %}
+                                <li class="log-entry d-flex justify-content-between align-items-center">
+                                    <span><i class="far fa-clock me-2"></i>{{ log.executed_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</span>
+                                    <span>
+                                        {% if log.status == 'success' %}
+                                            <span class="badge bg-success log-status-badge">نجاح</span>
+                                        {% elif log.status == 'error' %}
+                                            <span class="badge bg-danger log-status-badge">خطأ</span>
+                                        {% elif log.status == 'timeout' %}
+                                            <span class="badge bg-warning text-dark log-status-badge">مهلة</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary log-status-badge">{{ log.status }}</span>
+                                        {% endif %}
+                                    </span>
+                                    {# Placeholder for view log details button/link #}
+                                    {# <a href="#" class="btn btn-sm btn-outline-secondary ms-2" title="عرض التفاصيل"><i class="fas fa-eye"></i></a> #}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                             <div class="mt-2 text-end">
+                                <a href="{{ url_for('main.client_my_logs', userscript_id_filter=script_item.userscript_id) }}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-list-alt me-1"></i> عرض كل السجلات لهذا السكربت
+                                </a>
+                            </div>
+                        {% else %}
+                            <p class="text-muted small"><i class="fas fa-info-circle me-2"></i>لم يتم تشغيل هذا السكربت بعد.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            لا توجد سكربتات مخصصة لك حتى الآن.
+        </div>
+    {% endif %}
+</div>
+
+<!-- Execute Script Modal -->
+<div class="modal fade" id="executeScriptModal" tabindex="-1" aria-labelledby="executeScriptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="executeScriptModalLabel">تشغيل السكربت: <span id="modalScriptName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scriptExecutionForm">
+                    {# userscript_id is now taken from modalUserScriptIdInput.value in JS, so this hidden field might be redundant unless used as a direct form field submission fallback #}
+                    <input type="hidden" id="modalUserScriptId" name="userscript_id_for_execution">
+
+                    <div id="scriptParamsContainer" class="mb-3">
+                        <!-- Dynamic parameters will be injected here by JavaScript -->
+                    </div>
+                    <hr/>
+                    <div id="executionResultDisplay" class="mt-3" style="display:none;">
+                        <h6><i class="fas fa-poll me-2"></i>نتائج التشغيل:</h6>
+                        <div id="executionStatus" class="mb-2"></div>
+                        <div id="executionOutputContainer" style="display:none;">
+                            <strong><i class="fas fa-align-left me-1"></i>Output:</strong>
+                            <pre class="bg-light p-2 rounded small" id="executionOutput" style="max-height: 200px; overflow-y: auto;"></pre>
+                        </div>
+                        <div id="executionErrorContainer" style="display:none;" class="mt-2">
+                            <strong><i class="fas fa-exclamation-triangle me-1"></i>Error Details:</strong>
+                            <pre class="bg-light p-2 rounded small text-danger" id="executionError" style="max-height: 150px; overflow-y: auto;"></pre>
+                        </div>
+                        <div id="executionWarningContainer" style="display:none;" class="mt-2">
+                            <strong><i class="fas fa-exclamation-circle me-1"></i>Warning:</strong>
+                            <div class="alert alert-warning small" id="executionWarning"></div>
+                        </div>
+                        <p class="mt-2 small" id="runLogIdDisplay" style="display:none;"><strong>Log ID:</strong> <span id="runLogIdValue"></span></p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" id="confirmExecuteScriptButton">تشغيل السكربت</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var executeScriptModalElement = document.getElementById('executeScriptModal');
+    var executeScriptModal = new bootstrap.Modal(executeScriptModalElement);
+
+    var scriptParamsContainer = document.getElementById('scriptParamsContainer');
+    var modalScriptName = document.getElementById('modalScriptName');
+    var modalUserScriptIdInput = document.getElementById('modalUserScriptId');
+
+    // Execution result display elements
+    var executionResultDisplayDiv = document.getElementById('executionResultDisplay');
+    var executionStatusDiv = document.getElementById('executionStatus');
+    var executionOutputContainerDiv = document.getElementById('executionOutputContainer');
+    var executionOutputPre = document.getElementById('executionOutput');
+    var executionErrorContainerDiv = document.getElementById('executionErrorContainer');
+    var executionErrorPre = document.getElementById('executionError');
+    var executionWarningContainerDiv = document.getElementById('executionWarningContainer');
+    var executionWarningDiv = document.getElementById('executionWarning');
+    var runLogIdDisplayP = document.getElementById('runLogIdDisplay');
+    var runLogIdValueSpan = document.getElementById('runLogIdValue');
+
+    document.querySelectorAll('.execute-script-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            var userscriptId = this.dataset.userscriptId;
+            var scriptName = this.dataset.scriptName;
+            var paramsDefJson = this.dataset.scriptParamsDef;
+
+            modalScriptName.textContent = scriptName;
+            modalUserScriptIdInput.value = userscriptId;
+
+            // Clear previous results before showing
+            clearExecutionResults();
+
+            scriptParamsContainer.innerHTML = '';
+            try {
+                var paramsDef = JSON.parse(paramsDefJson);
+                if (Object.keys(paramsDef).length === 0) {
+                    scriptParamsContainer.innerHTML = '<p>هذا السكربت لا يتطلب أية معلمات.</p>';
+                } else {
+                    for (var paramName in paramsDef) {
+                        var definition = paramsDef[paramName];
+                        var labelText = paramName;
+                        var inputType = 'text';
+                        var isRequired = false;
+                        var defaultValue = '';
+                        var placeholderText = '';
+
+                        if (typeof definition === 'object' && definition !== null) {
+                            labelText = definition.label || paramName;
+                            inputType = definition.type || 'text';
+                            isRequired = definition.required || false;
+                            defaultValue = definition.default || '';
+                            placeholderText = definition.placeholder || (typeof definition === 'string' ? definition : paramName);
+                        } else if (typeof definition === 'string') {
+                            labelText = definition || paramName; // Use description as label
+                            placeholderText = definition;
+                        }
+
+                        var formGroup = document.createElement('div');
+                        formGroup.classList.add('mb-3');
+
+                        var label = document.createElement('label');
+                        label.classList.add('form-label');
+                        label.setAttribute('for', 'param-' + paramName);
+                        label.textContent = labelText + (isRequired ? ' *' : '');
+
+                        var input = document.createElement('input');
+                        input.classList.add('form-control');
+                        input.setAttribute('type', inputType);
+                        input.setAttribute('id', 'param-' + paramName);
+                        input.setAttribute('name', paramName);
+                        input.setAttribute('placeholder', placeholderText);
+                        if (defaultValue) input.value = defaultValue;
+                        if (isRequired) input.setAttribute('required', 'required');
+
+                        formGroup.appendChild(label);
+                        formGroup.appendChild(input);
+                        scriptParamsContainer.appendChild(formGroup);
+                    }
+                }
+            } catch (e) {
+                scriptParamsContainer.innerHTML = '<p class="text-danger">خطأ في تحليل تعريفات معلمات السكربت.</p>';
+                console.error("Error parsing params JSON:", e, paramsDefJson);
+            }
+            executeScriptModal.show();
+        });
+    });
+
+    document.getElementById('confirmExecuteScriptButton').addEventListener('click', function() {
+        var userscriptId = modalUserScriptIdInput.value;
+        var form = document.getElementById('scriptExecutionForm');
+        var formElements = form.elements; // Get all form elements
+        var params = {};
+        var allValid = true;
+
+        // Build params object and perform basic validation
+        for (var i = 0; i < formElements.length; i++) {
+            var element = formElements[i];
+            if (element.name && element.name !== 'userscript_id_for_execution') {
+                 if (element.hasAttribute('required') && !element.value.trim()) {
+                    allValid = false;
+                    element.classList.add('is-invalid'); // Add Bootstrap validation error class
+                    // Optionally add a general error message or specific messages per field
+                 } else {
+                    element.classList.remove('is-invalid');
+                 }
+                params[element.name] = element.value;
+            }
+        }
+
+        if (!allValid) {
+            // Display a general validation error message in the modal
+            executionResultDisplayDiv.style.display = 'block';
+            executionStatusDiv.innerHTML = '<span class="badge bg-danger">خطأ في التحقق</span>';
+            executionErrorContainerDiv.style.display = 'block';
+            executionErrorPre.textContent = 'يرجى ملء جميع الحقول المطلوبة (*).';
+            return; // Stop execution
+        }
+
+        clearExecutionResults(); // Clear before new execution
+        executionResultDisplayDiv.style.display = 'block';
+        executionStatusDiv.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">جاري التنفيذ...</span></div> جاري تنفيذ السكربت...';
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        fetch("{{ url_for('main.client_execute_script', userscript_id=0) }}".replace('/0/', '/' + userscriptId + '/'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(params)
+        })
+        .then(response => {
+            if (!response.ok) { // Handle HTTP errors like 500, 404 etc.
+                return response.json().then(errData => {
+                    throw { status: response.status, data: errData }; // Throw an object to be caught below
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            executionStatusDiv.innerHTML = '<strong>الحالة:</strong> <span class="badge bg-' + (data.status === 'success' ? 'success' : (data.status === 'timeout' ? 'warning text-dark' : 'danger')) + '">' + escapeHtml(data.status) + '</span>';
+
+            if (data.output) {
+                executionOutputContainerDiv.style.display = 'block';
+                executionOutputPre.textContent = data.output; // Already escaped by server or assumes plain text
+            }
+            if (data.error_message) {
+                executionErrorContainerDiv.style.display = 'block';
+                executionErrorPre.textContent = data.error_message; // Already escaped
+            }
+            if (data.warning_message) {
+                executionWarningContainerDiv.style.display = 'block';
+                executionWarningDiv.textContent = data.warning_message; // Already escaped
+            }
+            if (data.run_log_id) {
+                runLogIdDisplayP.style.display = 'block';
+                runLogIdValueSpan.textContent = data.run_log_id;
+            }
+            // TODO: Consider refreshing the logs on the main page here.
+            // This might involve another AJAX call or a page reload if simple.
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            executionStatusDiv.innerHTML = '<strong>الحالة:</strong> <span class="badge bg-danger">فشل الاتصال</span>';
+            executionErrorContainerDiv.style.display = 'block';
+            if (error.data && error.data.error_message) {
+                 executionErrorPre.textContent = 'فشل الاتصال بالخادم: ' + escapeHtml(error.data.error_message);
+                 if(error.data.errors) { // Display validation errors from server if any
+                    executionErrorPre.textContent += "\nالتفاصيل: " + escapeHtml(JSON.stringify(error.data.errors));
+                 }
+            } else {
+                 executionErrorPre.textContent = 'حدث خطأ أثناء الاتصال بالخادم.';
+            }
+        });
+    });
+
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') {
+            if (unsafe === null || typeof unsafe === 'undefined') return '';
+            try { unsafe = String(unsafe); } catch (e) { return ''; }
+        }
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+
+    function clearExecutionResults() {
+        executionStatusDiv.innerHTML = '';
+        executionOutputPre.textContent = '';
+        executionErrorPre.textContent = '';
+        executionWarningDiv.textContent = '';
+        runLogIdValueSpan.textContent = '';
+
+        executionOutputContainerDiv.style.display = 'none';
+        executionErrorContainerDiv.style.display = 'none';
+        executionWarningContainerDiv.style.display = 'none';
+        runLogIdDisplayP.style.display = 'none';
+        executionResultDisplayDiv.style.display = 'none';
+    }
+
+    executeScriptModalElement.addEventListener('hidden.bs.modal', function () {
+        scriptParamsContainer.innerHTML = ''; // Clear params form
+        clearExecutionResults(); // Clear results area
+        modalScriptName.textContent = '';
+        // modalUserScriptIdInput.value = ''; // Keep this if needed for other purposes, or clear if not
+    });
+});
+</script>
+{% endblock %}

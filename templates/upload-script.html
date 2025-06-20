@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}رفع سكربت جديد{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0"><i class="fas fa-upload me-2"></i>رفع سكربت جديد</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-4">
+                        <label class="form-label">اسم السكربت</label>
+                        <input type="text" class="form-control" name="name" required
+                               placeholder="أدخل اسماً وصفياً للسكربت">
+                        <div class="form-text text-muted">اختر اسماً يساعدك في تمييز السكربت بسهولة</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">وصف السكربت</label>
+                        <textarea class="form-control" name="description" rows="3"
+                                  placeholder="اشرح ما يقوم به السكربت"></textarea>
+                        <div class="form-text text-muted">اكتب وصفاً مختصراً لوظيفة السكربت والغرض منه</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">اسم المجلد</label>
+                        <input type="text" class="form-control" name="folder"
+                               placeholder="مثل: أدوات تسويقية">
+                        <div class="form-text text-muted">أدخل اسم المجلد لتنظيم السكربتات (اختياري)</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">ملف السكربت</label>
+                        <input type="file" class="form-control" name="script_file"
+                               accept=".py"
+                               onchange="validateFile(this)">
+                        <div class="form-text text-muted">يجب أن يكون الملف بصيغة .py</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">محتوى السكربت</label>
+                        <textarea class="form-control font-monospace" name="script_content" id="scriptContent" rows="10"
+                                  placeholder="# يمكنك كتابة كود Python هنا مباشرة"></textarea>
+                        <div class="form-text text-muted">يمكنك إما رفع ملف أو كتابة الكود مباشرة</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">المتغيرات المطلوبة</label>
+                        <div id="variables-container">
+                            <div class="variable-row row mb-2">
+                                <div class="col">
+                                    <input type="text" class="form-control" name="var_names[]" placeholder="اسم المتغير">
+                                </div>
+                                <div class="col">
+                                    <select class="form-select" name="var_types[]">
+                                        <option value="text">نص</option>
+                                        <option value="number">رقم</option>
+                                        <option value="boolean">نعم/لا</option>
+                                        <option value="date">تاريخ</option>
+                                        <option value="file">ملف</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <input type="text" class="form-control" name="var_values[]" placeholder="قيمة المتغير">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addVariable()">
+                            <i class="fas fa-plus me-1"></i>إضافة متغير
+                        </button>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-warning" onclick="testScript()">
+                                <i class="fas fa-vial me-1"></i>اختبار السكربت
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="runScript()">
+                                <i class="fas fa-play me-1"></i>تشغيل السكربت
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="saveScript()">
+                                <i class="fas fa-save me-1"></i>حفظ السكربت
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">نتائج التشغيل</label>
+                        <div class="border rounded p-3 bg-light" id="resultArea" style="min-height: 100px; max-height: 300px; overflow-y: auto;">
+                            <pre class="mb-0" id="scriptOutput" style="white-space: pre-wrap;"></pre>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" onclick="history.back()">
+                            <i class="fas fa-arrow-right me-1"></i>رجوع
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i>رفع السكربت
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function validateFile(input) {
+    const file = input.files[0];
+    if (file) {
+        if (!file.name.endsWith('.py')) {
+            alert('يرجى اختيار ملف Python بامتداد .py');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.querySelector('#scriptContent').value = e.target.result;
+        };
+        reader.readAsText(file);
+    }
+}
+
+function addVariable() {
+    const container = document.getElementById('variables-container');
+    const newRow = container.children[0].cloneNode(true);
+    newRow.querySelectorAll('input, select').forEach(input => input.value = '');
+    container.appendChild(newRow);
+}
+
+function getVariables() {
+    const variables = {};
+    const rows = document.querySelectorAll('.variable-row');
+    rows.forEach(row => {
+        const name = row.querySelector('[name="var_names[]"]').value;
+        const type = row.querySelector('[name="var_types[]"]').value;
+        const value = row.querySelector('[name="var_values[]"]').value;
+        if (name && value) {
+            variables[name] = { type, value };
+        }
+    });
+    return variables;
+}
+
+function displayResult(result, isError = false) {
+    const output = document.getElementById('scriptOutput');
+    output.textContent = result;
+    output.className = isError ? 'text-danger' : 'text-success';
+}
+
+async function testScript() {
+    const scriptContent = document.getElementById('scriptContent').value;
+    const name = document.querySelector('input[name="name"]').value;
+    
+    if (!name.trim()) {
+        alert('الرجاء إدخال اسم السكربت أولاً');
+        return;
+    }
+    
+    if (!scriptContent.trim()) {
+        alert('الرجاء إدخال كود السكربت أولاً');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/scripts/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                code: scriptContent,
+                variables: getVariables()
+            })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            displayResult(data.result, false);
+        } else {
+            displayResult(data.error || 'حدث خطأ غير معروف', true);
+        }
+    } catch (error) {
+        displayResult('حدث خطأ أثناء اختبار السكربت: ' + error.message, true);
+    }
+}
+
+async function runScript() {
+    const scriptContent = document.getElementById('scriptContent').value;
+    const name = document.querySelector('input[name="name"]').value;
+    
+    if (!name.trim()) {
+        alert('الرجاء إدخال اسم السكربت أولاً');
+        return;
+    }
+    
+    if (!scriptContent.trim()) {
+        alert('الرجاء إدخال كود السكربت أولاً');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/scripts/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                code: scriptContent,
+                variables: getVariables()
+            })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            displayResult(data.result, false);
+        } else {
+            displayResult(data.error || 'حدث خطأ غير معروف', true);
+        }
+    } catch (error) {
+        displayResult('حدث خطأ أثناء تشغيل السكربت: ' + error.message, true);
+    }
+}
+
+async function saveScript() {
+    const name = document.querySelector('input[name="name"]').value;
+    const description = document.querySelector('textarea[name="description"]').value;
+    const scriptContent = document.getElementById('scriptContent').value;
+    
+    if (!name.trim()) {
+        alert('الرجاء إدخال اسم السكربت');
+        return;
+    }
+    
+    if (!scriptContent.trim()) {
+        alert('الرجاء إدخال كود السكربت');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/scripts/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                description: description,
+                code: scriptContent,
+                variables: getVariables()
+            })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            displayResult('تم حفظ السكربت بنجاح! ✅', false);
+            // تأخير التحويل لمدة ثانيتين ليتمكن المستخدم من رؤية رسالة النجاح
+            setTimeout(() => {
+                window.location.href = '/manage_scripts';
+            }, 2000);
+        } else {
+            displayResult(data.error || 'حدث خطأ غير معروف', true);
+        }
+    } catch (error) {
+        displayResult('حدث خطأ أثناء حفظ السكربت: ' + error.message, true);
+    }
+}
+
+// تحديث نموذج الرفع للتعامل مع الملفات والمتغيرات
+document.getElementById('uploadForm').onsubmit = async function(e) {
+    e.preventDefault();
+    
+    const name = document.querySelector('input[name="name"]').value;
+    const scriptContent = document.getElementById('scriptContent').value;
+    
+    if (!name.trim()) {
+        alert('الرجاء إدخال اسم السكربت');
+        return;
+    }
+    
+    if (!scriptContent.trim()) {
+        alert('الرجاء إدخال كود السكربت');
+        return;
+    }
+
+    try {
+        const formData = new FormData(this);
+        formData.append('variables', JSON.stringify(getVariables()));
+        
+        const response = await fetch('/admin/upload-script', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.redirected) {
+            window.location.href = response.url;
+        } else {
+            const text = await response.text();
+            displayResult('حدث خطأ أثناء رفع السكربت', true);
+        }
+    } catch (error) {
+        displayResult('حدث خطأ أثناء رفع السكربت: ' + error.message, true);
+    }
+};
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.font-monospace {
+    font-family: monospace;
+}
+</style>
+{% endblock %}
+
+{% endblock %}

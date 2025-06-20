@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة تحكم المشرف - منصة إتمام{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0">
+                <i class="fas fa-user-shield me-2"></i>
+                لوحة تحكم المشرف
+            </h2>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- إحصائيات النظام -->
+    <div class="row mb-4">
+        {% if current_user.has_permission('manage_scripts') %}
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">السكربتات النشطة</h5>
+                    <h2 class="mb-0">{{ stats.active_scripts }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">السكربتات المعلقة</h5>
+                    <h2 class="mb-0">{{ stats.pending_scripts }}</h2>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_user.has_permission('manage_users') %}
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">المستخدمين</h5>
+                    <h2 class="mb-0">{{ stats.users_count }}</h2>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_user.has_permission('view_logs') %}
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">عمليات اليوم</h5>
+                    <h2 class="mb-0">{{ stats.today_executions }}</h2>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- إدارة المستخدمين -->
+    {% if current_user.has_permission('manage_users') %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">إدارة المستخدمين</h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-plus me-2"></i>إضافة مستخدم جديد
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>الاسم الكامل</th>
+                            <th>اسم المستخدم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>السكربتات المخصصة</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.full_name }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ user.created_scripts|length }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if user.is_active else 'danger' }}">
+                                    {{ 'مفعل' if user.is_active else 'معطل' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            onclick="editUser('{{ user.id }}')"
+                                            title="تعديل المستخدم">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% if current_user.has_permission('assign_scripts') %}
+                                    <button type="button" class="btn btn-sm btn-info" 
+                                            onclick="assignScripts('{{ user.id }}')"
+                                            title="تخصيص سكربتات">
+                                        <i class="fas fa-code"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-warning" 
+                                            onclick="resetPassword('{{ user.id }}')"
+                                            title="إعادة تعيين كلمة المرور">
+                                        <i class="fas fa-lock"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-{{ 'danger' if user.is_active else 'success' }}" 
+                                            onclick="toggleUserStatus('{{ user.id }}')"
+                                            title="{{ 'تعطيل' if user.is_active else 'تفعيل' }} المستخدم">
+                                        <i class="fas fa-{{ 'ban' if user.is_active else 'check' }}"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- إدارة السكربتات -->
+    {% if current_user.has_permission('manage_scripts') %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">إدارة السكربتات</h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScriptModal">
+                    <i class="fas fa-plus me-2"></i>إضافة سكربت جديد
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>اسم السكربت</th>
+                            <th>الوصف</th>
+                            <th>المستخدمين</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for script in scripts %}
+                        <tr>
+                            <td>{{ script.name }}</td>
+                            <td>{{ script.description }}</td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ script.users|length }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ script_status_color(script.status) }}">
+                                    {{ script.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            onclick="editScript('{{ script.id }}')"
+                                            title="تعديل السكربت">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-info" 
+                                            onclick="previewScript('{{ script.id }}')"
+                                            title="معاينة السكربت">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-warning" 
+                                            onclick="testScript('{{ script.id }}')"
+                                            title="اختبار السكربت">
+                                        <i class="fas fa-vial"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-{{ 'danger' if script.is_active else 'success' }}" 
+                                            onclick="toggleScriptStatus('{{ script.id }}')"
+                                            title="{{ 'تعطيل' if script.is_active else 'تفعيل' }} السكربت">
+                                        <i class="fas fa-{{ 'ban' if script.is_active else 'check' }}"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- نافذة إضافة سكربت جديد -->
+<div class="modal fade" id="addScriptModal" tabindex="-1" aria-labelledby="addScriptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addScriptModalLabel">إضافة سكربت جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addScriptForm" action="{{ url_for('add_script') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="scriptName" class="form-label">اسم السكربت</label>
+                        <input type="text" class="form-control" id="scriptName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="scriptDescription" class="form-label">وصف السكربت</label>
+                        <textarea class="form-control" id="scriptDescription" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="scriptCode" class="form-label">كود السكربت</label>
+                        <textarea class="form-control" id="scriptCode" name="code" rows="10" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="scriptFile" class="form-label">أو قم بتحميل ملف السكربت</label>
+                        <input type="file" class="form-control" id="scriptFile" name="script_file">
+                        <small class="text-muted">الملفات المدعومة: .py, .js, .php, .sh</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إضافة السكربت</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة معاينة السكربت -->
+<div class="modal fade" id="previewScriptModal" tabindex="-1" aria-labelledby="previewScriptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewScriptModalLabel">معاينة السكربت</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">اسم السكربت</label>
+                    <p id="previewScriptName" class="form-control-plaintext"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">وصف السكربت</label>
+                    <p id="previewScriptDescription" class="form-control-plaintext"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">كود السكربت</label>
+                    <pre id="previewScriptCode" class="form-control-plaintext"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editUser(userId) {
+    // تنفيذ عملية تعديل المستخدم
+}
+
+function assignScripts(userId) {
+    // تنفيذ عملية تخصيص السكربتات
+}
+
+function resetPassword(userId) {
+    // تنفيذ عملية إعادة تعيين كلمة المرور
+}
+
+function toggleUserStatus(userId) {
+    // تنفيذ عملية تفعيل/تعطيل المستخدم
+}
+
+function editScript(scriptId) {
+    // تنفيذ عملية تعديل السكربت
+}
+
+function previewScript(scriptId) {
+    // تنفيذ عملية معاينة السكربت
+}
+
+function testScript(scriptId) {
+    // تنفيذ عملية اختبار السكربت
+}
+
+function toggleScriptStatus(scriptId) {
+    // تنفيذ عملية تفعيل/تعطيل السكربت
+}
+
+// دالة لمعاينة السكربت
+function previewScript(scriptId) {
+    fetch(`/preview_script/${scriptId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('previewScriptName').textContent = data.name;
+            document.getElementById('previewScriptDescription').textContent = data.description;
+            document.getElementById('previewScriptCode').textContent = data.code;
+            new bootstrap.Modal(document.getElementById('previewScriptModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء تحميل بيانات السكربت');
+        });
+}
+
+// دالة لاختبار السكربت
+function testScript(scriptId) {
+    // يمكنك إضافة منطق اختبار السكربت هنا
+    alert('سيتم إضافة هذه الميزة قريباً');
+}
+
+// إرسال نموذج إضافة السكربت باستخدام AJAX
+document.getElementById('addScriptForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert(data.message || 'تم إضافة السكربت بنجاح');
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء إضافة السكربت');
+    });
+});
+</script>
+{% endblock %}

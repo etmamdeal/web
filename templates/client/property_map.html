@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}إضافة / عرض العقارات على الخريطة{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""/>
+<style>
+    #mapid {
+        height: 600px; /* Default height */
+        width: 100%;
+        border-radius: .5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    /* Ensure map resizes well on smaller screens if needed */
+    @media (max-width: 768px) {
+        #mapid {
+            height: 450px;
+        }
+    }
+    .modal-lg {
+        max-width: 700px; /* Adjust as needed */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>إدارة العقارات على الخريطة</h2>
+        <a href="{{ url_for('main.client_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>العودة إلى لوحة التحكم
+        </a>
+    </div>
+
+    <p class="text-muted">انقر على الخريطة لتحديد موقع عقار جديد، أو استعرض عقاراتك الحالية.</p>
+
+    <!-- زر تحديد الموقع الحالي -->
+    <button id="locateMeBtn" class="btn btn-outline-primary mb-3">
+        <i class="fas fa-location-crosshairs"></i> تحديد موقعي الحالي
+    </button>
+
+    <div id="mapid"></div>
+
+    <!-- Modal for Property Form -->
+    <div class="modal fade" id="propertyFormModal" tabindex="-1" aria-labelledby="propertyFormModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="propertyFormModalLabel">إضافة تفاصيل عقار جديد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('main.client_add_property') }}" id="addPropertyForm" novalidate>
+                        {{ form.hidden_tag() }} {# CSRF token and other hidden fields from WTForms #}
+
+                        {# These hidden fields will be populated by JavaScript with map click coordinates #}
+                        <input type="hidden" id="property_latitude" name="latitude">
+                        <input type="hidden" id="property_longitude" name="longitude">
+
+                        <p class="mb-2">الإحداثيات المحددة: <span id="coords-display" class="fw-bold text-primary">غير محدد</span></p>
+                        <hr class="my-3">
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.title.id }}">عنوان العقار</label>
+                            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="مثال: فيلا فاخرة بحي النرجس") }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.title.errors %}<span>{{ error }}</span><br>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.type.id }}">نوع العقار</label>
+                            {{ form.type(class="form-select" + (" is-invalid" if form.type.errors else "")) }}
+                            {% if form.type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.type.errors %}<span>{{ error }}</span><br>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="{{ form.price.id }}">السعر (ر.س)</label>
+                                <div class="input-group">
+                                    {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else ""), placeholder="مثال: 1200000") }}
+                                    <span class="input-group-text">ر.س</span>
+                                </div>
+                                {% if form.price.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.price.errors %}<span>{{ error }}</span><br>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="{{ form.area.id }}">المساحة (م²)</label>
+                                <div class="input-group">
+                                    {{ form.area(class="form-control" + (" is-invalid" if form.area.errors else ""), placeholder="مثال: 300") }}
+                                    <span class="input-group-text">م²</span>
+                                </div>
+                                {% if form.area.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.area.errors %}<span>{{ error }}</span><br>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.rooms.id }}">عدد الغرف</label>
+                            {{ form.rooms(class="form-control" + (" is-invalid" if form.rooms.errors else ""), placeholder="مثال: 5") }}
+                            {% if form.rooms.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.rooms.errors %}<span>{{ error }}</span><br>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.description.id }}">الوصف / الملاحظات</label>
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3", placeholder="أضف وصفاً أو ملاحظات إضافية عن العقار...") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}<span>{{ error }}</span><br>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <!-- حقل رفع الصور -->
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.images.id }}">صور العقار</label>
+                            {{ form.images(class="form-control", accept="image/*", multiple=True, capture="environment") }}
+                            <small class="form-text text-muted">يمكنك اختيار صور من جهازك أو التصوير بالكاميرا مباشرة.</small>
+                            {% if form.images.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.images.errors %}<span>{{ error }}</span><br>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {# The submit button is in modal-footer, it will submit this form via 'form' attribute #}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    <button type="submit" class="btn btn-primary" id="savePropertyButton" form="addPropertyForm">حفظ العقار</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Initialize map (e.g., centered on Riyadh)
+    var map = L.map('mapid').setView([24.7136, 46.6753], 10);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var newPropertyMarker;
+    var propertyFormModalEl = document.getElementById('propertyFormModal');
+    var propertyFormModal = new bootstrap.Modal(propertyFormModalEl); // Ensure Bootstrap JS is loaded
+
+    // Display existing properties
+    try {
+        var existingProperties = JSON.parse('{{ properties_json|safe }}');
+        if (Array.isArray(existingProperties)) {
+            existingProperties.forEach(function(prop) {
+                if (prop.lat && prop.lng) {
+                    L.marker([prop.lat, prop.lng]).addTo(map)
+                        .bindPopup('<b>' + prop.title + '</b><br>النوع: ' + prop.type + '<br>السعر: ' + prop.price + ' ر.س.' + '<br><a href="' + prop.url + '">تعديل</a>');
+                }
+            });
+        }
+    } catch (e) {
+        console.error("Error parsing properties_json:", e);
+        // Optionally, display a user-friendly message on the page
+    }
+
+
+    map.on('click', function(e) {
+        if (newPropertyMarker) {
+            map.removeLayer(newPropertyMarker);
+        }
+        newPropertyMarker = L.marker(e.latlng).addTo(map);
+        newPropertyMarker.bindPopup("<b>موقع العقار الجديد</b><br/>سيتم إضافة التفاصيل عبر النموذج.").openPopup();
+
+        document.getElementById('property_latitude').value = e.latlng.lat.toFixed(7); // More precision
+        document.getElementById('property_longitude').value = e.latlng.lng.toFixed(7); // More precision
+        document.getElementById('coords-display').textContent = e.latlng.lat.toFixed(5) + ', ' + e.latlng.lng.toFixed(5);
+
+        // Update modal title or other elements if needed
+        document.getElementById('propertyFormModalLabel').textContent = 'إضافة تفاصيل عقار جديد في الموقع المحدد';
+
+        propertyFormModal.show();
+    });
+
+    // Removed the placeholder alert for savePropertyButton, as it now submits the form.
+    // document.getElementById('savePropertyButton').addEventListener('click', function() {
+    //     // This button now has type="submit" and form="addPropertyForm", so it will submit the form.
+    // });
+
+    document.getElementById('locateMeBtn').onclick = function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+                map.setView([lat, lng], 16);
+                if (newPropertyMarker) {
+                    map.removeLayer(newPropertyMarker);
+                }
+                newPropertyMarker = L.marker([lat, lng]).addTo(map);
+                newPropertyMarker.bindPopup("<b>موقعك الحالي</b>").openPopup();
+                document.getElementById('property_latitude').value = lat.toFixed(7);
+                document.getElementById('property_longitude').value = lng.toFixed(7);
+                document.getElementById('coords-display').textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+                document.getElementById('propertyFormModalLabel').textContent = 'إضافة تفاصيل عقار جديد في الموقع الحالي';
+                // لا تفتح النموذج تلقائياً
+            }, function(error) {
+                alert('تعذر تحديد الموقع: الرجاء السماح للمتصفح بالوصول إلى الموقع.');
+            });
+        } else {
+            alert('المتصفح لا يدعم تحديد الموقع الجغرافي.');
+        }
+    };
+});
+</script>
+{% endblock %}

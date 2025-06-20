@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - منصة إتمام{% endblock %}
+
+{% block styles %}
+<style>
+    .form-section {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.075);
+    }
+    .form-section h4 {
+        margin-bottom: 1.5rem;
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: .75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-plus-circle text-primary me-2"></i>{{ title }}</h2>
+        <a href="{{ url_for('main.client_deal_tracker') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>العودة إلى متتبع الصفقات
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <section class="form-section">
+        <form method="POST" action="{{ url_for('main.client_add_deal') }}" novalidate>
+            {{ form.hidden_tag() }} {# CSRF token #}
+
+            <div class="mb-3">
+                {{ form.property_id.label(class="form-label") }}
+                {{ form.property_id(class="form-select" + (" is-invalid" if form.property_id.errors else "")) }}
+                {% if form.property_id.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.property_id.errors %}<span>{{ error }}</span><br>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.client_name.label(class="form-label") }}
+                {{ form.client_name(class="form-control" + (" is-invalid" if form.client_name.errors else ""), placeholder="مثال: السيد عبدالله محمد") }}
+                {% if form.client_name.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.client_name.errors %}<span>{{ error }}</span><br>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.stage.label(class="form-label") }}
+                {{ form.stage(class="form-select" + (" is-invalid" if form.stage.errors else "")) }}
+                {% if form.stage.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.stage.errors %}<span>{{ error }}</span><br>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.notes.label(class="form-label") }}
+                {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="5", placeholder="أضف ملاحظات حول الصفقة، تفاصيل الاتفاق، إلخ...") }}
+                {% if form.notes.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.notes.errors %}<span>{{ error }}</span><br>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end">
+                <a href="{{ url_for('main.client_deal_tracker') }}" class="btn btn-outline-secondary me-2">إلغاء</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

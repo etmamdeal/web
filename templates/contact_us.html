@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}تواصل معنا - منصة إتمام{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center mb-5">
+            <h1 class="display-4 mb-4">تواصل معنا</h1>
+            <p class="lead">نحن هنا لمساعدتك. يمكنك التواصل معنا في أي وقت</p>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card contact-card">
+                <div class="card-body p-4">
+                    <form action="{{ url_for('main.contact_us') }}" method="POST" id="contactForm" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-4">
+                            <label for="name" class="form-label">الاسم الكامل</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   required minlength="3" maxlength="50"
+                                   pattern="[ء-ي\s\w]+"
+                                   title="يرجى إدخال اسم صحيح">
+                            <div class="invalid-feedback">
+                                يرجى إدخال اسمك الكامل (3 أحرف على الأقل)
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="email" class="form-label">البريد الإلكتروني</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                                   title="يرجى إدخال بريد إلكتروني صحيح">
+                            <div class="invalid-feedback">
+                                يرجى إدخال بريد إلكتروني صحيح
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="subject" class="form-label">الموضوع</label>
+                            <input type="text" class="form-control" id="subject" name="subject" 
+                                   required minlength="5" maxlength="100"
+                                   title="يرجى إدخال موضوع الرسالة">
+                            <div class="invalid-feedback">
+                                يرجى إدخال موضوع الرسالة (5 أحرف على الأقل)
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="message" class="form-label">الرسالة</label>
+                            <textarea class="form-control" id="message" name="message" 
+                                      rows="5" required minlength="20"
+                                      title="يرجى كتابة رسالتك"></textarea>
+                            <div class="invalid-feedback">
+                                يرجى كتابة رسالتك (20 حرف على الأقل)
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>
+                                إرسال الرسالة
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Contact Information -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+            <div class="row text-center">
+                <div class="col-md-6 mb-4">
+                    <div class="contact-info-card">
+                        <i class="fas fa-envelope-open-text fa-2x mb-3"></i>
+                        <h4>راسلنا عبر البريد</h4>
+                        <p>ai_agents@etmamdeal.com</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="contact-info-card">
+                        <i class="fas fa-clock fa-2x mb-3"></i>
+                        <h4>ساعات العمل</h4>
+                        <p>من الأحد إلى الخميس<br>9:00 صباحاً - 5:00 مساءً</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .contact-card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-radius: 15px;
+    }
+
+    .form-control {
+        padding: 0.8rem;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(43, 140, 49, 0.25);
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .contact-info-card {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+
+    .contact-info-card i {
+        color: var(--primary-color);
+    }
+
+    .btn-primary {
+        transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .alert {
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('contactForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الإرسال...';
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

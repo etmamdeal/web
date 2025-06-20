@@ -1,0 +1,211 @@
+/* تعريف الخط */
+@font-face {
+    font-family: 'Questv1';
+    src: url('../fonts/Questv1-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* إعدادات عامة */
+:root {
+    --primary-color: #2b8c31;
+    --secondary-color: #0077cc;
+    --background-color: #fdf4e3;
+    --text-color: #333;
+    --danger-color: #dc3545;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+}
+
+/* التنسيق الأساسي */
+html, body {
+    font-family: 'Questv1', system-ui, -apple-system, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+}
+
+/* تطبيق الخط على جميع العناصر */
+*, *::before, *::after {
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+/* الهيدر والتنقل */
+.navbar {
+    background-color: var(--primary-color);
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.nav-link {
+    color: white !important;
+    margin: 0 0.5rem;
+    transition: opacity 0.3s;
+    padding: 0.5rem 1rem;
+}
+
+.nav-link:hover {
+    opacity: 0.8;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 6px;
+}
+
+/* الأزرار */
+.btn {
+    font-family: 'Questv1', sans-serif;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* البطاقات */
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* الجداول */
+.table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+.table th {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+    padding: 1rem;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+/* النماذج */
+.form-control {
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(43, 140, 49, 0.25);
+}
+
+/* التنبيهات */
+.alert {
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border: none;
+}
+
+/* توافق الأجهزة المحمولة */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .navbar-nav {
+        margin-top: 1rem;
+    }
+
+    .nav-link {
+        padding: 0.75rem 1rem;
+        margin: 0.25rem 0;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+    }
+
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        margin-bottom: 1rem;
+    }
+}
+
+/* تحسينات إضافية للواجهة */
+.page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.script-status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}

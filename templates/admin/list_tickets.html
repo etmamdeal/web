@@ -1,0 +1,78 @@
+{% extends "base.html" %} {# Or your admin base template #}
+
+{% block title %}إدارة تذاكر الدعم{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-ticket-alt me-2"></i>إدارة تذاكر الدعم</h2>
+        {# Optional: Add filter controls here in the future #}
+    </div>
+    <hr>
+
+    {% if tickets and tickets|length > 0 %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>المعرف</th>
+                    <th>الموضوع</th>
+                    <th>مقدم الطلب</th>
+                    <th>النوع</th>
+                    <th>الحالة</th>
+                    <th>الأولوية</th>
+                    <th>آخر تحديث</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>#{{ ticket.id }}</td>
+                    <td>{{ ticket.subject }}</td>
+                    <td>{{ ticket.user.username }} ({{ ticket.user.email }})</td>
+                    <td>
+                        {% if ticket.ticket_type == 'technical' %}دعم فني
+                        {% elif ticket.ticket_type == 'billing' %}استفسارات الفواتير
+                        {% elif ticket.ticket_type == 'general_inquiry' %}استفسار عام
+                        {% else %}{{ ticket.ticket_type }}{% endif %}
+                    </td>
+                    <td>
+                        <span class="badge
+                            {% if ticket.status == 'open' %}bg-success
+                            {% elif ticket.status == 'in_progress' %}bg-warning text-dark
+                            {% elif ticket.status == 'closed' %}bg-secondary
+                            {% elif ticket.status == 'resolved' %}bg-primary
+                            {% else %}bg-light text-dark{% endif %}">
+                            {% if ticket.status == 'open' %}مفتوحة
+                            {% elif ticket.status == 'in_progress' %}قيد المعالجة
+                            {% elif ticket.status == 'closed' %}مغلقة
+                            {% elif ticket.status == 'resolved' %}تم الحل
+                            {% else %}{{ ticket.status }}{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if ticket.priority == 'low' %}منخفضة
+                        {% elif ticket.priority == 'medium' %}متوسطة
+                        {% elif ticket.priority == 'high' %}عالية
+                        {% elif ticket.priority == 'urgent' %}عاجلة
+                        {% else %}{{ ticket.priority }}{% endif %}
+                    </td>
+                    <td>{{ ticket.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('main.admin_view_ticket', ticket_id=ticket.id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye me-1"></i>عرض/رد
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        لا توجد تذاكر دعم حالياً.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

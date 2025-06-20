@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}شرح الخدمة - منصة إتمام{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 mb-4">مرحباً بك في منصة إتمام</h1>
+            <p class="lead mb-4">نقدم لك حلولاً متكاملة لأتمتة وإدارة السكربتات بكفاءة عالية وأمان تام</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('scripts') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-code me-2"></i>استعراض السكربتات
+                </a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>تسجيل حساب جديد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Features -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h2 class="mb-4">مميزات المنصة</h2>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3>أتمتة ذكية</h3>
+                <p>سكربتات متطورة لأتمتة مختلف العمليات العقارية</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>أمان عالي</h3>
+                <p>حماية متكاملة لبياناتك وخصوصية معلوماتك</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>توفير الوقت</h3>
+                <p>تنفيذ المهام بسرعة وكفاءة عالية</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Preview -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h2 class="mb-4">نماذج من السكربتات</h2>
+            <p class="lead mb-5">مجموعة متنوعة من السكربتات المتخصصة في القطاع العقاري</p>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="script-preview-card">
+                <div class="script-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h4>سكربت البحث العقاري</h4>
+                <p>بحث متقدم في المواقع العقارية</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="script-preview-card">
+                <div class="script-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h4>سكربت تحليل الأسعار</h4>
+                <p>تحليل وتتبع أسعار العقارات</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="script-preview-card">
+                <div class="script-icon">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+                <h4>سكربت إدارة العقود</h4>
+                <p>إنشاء وإدارة العقود العقارية</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="row">
+        <div class="col-12 text-center">
+            <div class="cta-section p-5 rounded">
+                <h2 class="mb-4">ابدأ الآن مع سكربتات إتمام</h2>
+                <p class="lead mb-4">اكتشف قوة الأتمتة في عملياتك العقارية</p>
+                <a href="{{ url_for('scripts') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-code me-2"></i>استعراض جميع السكربتات
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.feature-card {
+    padding: 2rem;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+    text-align: center;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.feature-icon i {
+    font-size: 2rem;
+    color: var(--bs-primary);
+}
+
+.script-preview-card {
+    padding: 2rem;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+    text-align: center;
+    height: 100%;
+    border: 1px solid #eee;
+}
+
+.script-preview-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--bs-primary);
+}
+
+.script-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    background: var(--bs-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.script-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.cta-section {
+    background: linear-gradient(45deg, var(--bs-primary), #2980b9);
+    color: white;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}متتبع الصفقات - لوحة تحكم الوسيط{% endblock %}
+
+{% block styles %}
+<style>
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .deal-card { /* Optional: for card view instead of table */
+        margin-bottom: 1.5rem;
+    }
+    .filter-form .form-select, .filter-form .btn {
+        height: calc(1.5em + .75rem + 2px);
+    }
+    .badge-stage {
+        font-size: 0.9em;
+        padding: 0.5em 0.75em;
+        min-width: 100px; /* For consistent badge width */
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-handshake me-2"></i>متتبع الصفقات الخاص بي</h2>
+        <a href="{{ url_for('main.client_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>العودة إلى لوحة التحكم
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Filtering Form -->
+    <form method="GET" action="{{ url_for('main.client_deal_tracker') }}" class="mb-4 p-3 bg-light border rounded filter-form">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <label for="stage_filter_select" class="form-label visually-hidden">تصفية حسب المرحلة:</label>
+                <select name="stage_filter" id="stage_filter_select" class="form-select">
+                    <option value="all" {% if current_stage_filter == 'all' or not current_stage_filter %}selected{% endif %}>جميع المراحل</option>
+                    {% for d_stage in available_stages %}
+                    <option value="{{ d_stage }}" {% if current_stage_filter == d_stage %}selected{% endif %}>{{ d_stage }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>تصفية</button>
+            </div>
+            <div class="col-md-2">
+                 <a href="{{ url_for('main.client_deal_tracker') }}" class="btn btn-outline-secondary w-100">إعادة تعيين</a>
+            </div>
+            <div class="col-md-4 text-md-end mt-2 mt-md-0 d-flex justify-content-md-end align-items-center">
+                <a href="{{ url_for('main.client_deal_pipeline') }}" class="btn btn-info me-2"> <i class="fas fa-stream me-2"></i>عرض خط الأنابيب</a>
+                <a href="{{ url_for('main.client_add_deal') }}" class="btn btn-success"> <i class="fas fa-plus me-2"></i>إضافة صفقة جديدة</a>
+            </div>
+        </div>
+    </form>
+    <hr class="my-4">
+
+    {% if deals_pagination.items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">العقار</th>
+                        <th scope="col">اسم العميل</th>
+                        <th scope="col">المرحلة</th>
+                        <th scope="col">آخر تحديث</th>
+                        <th scope="col" style="min-width: 200px;">ملاحظات</th>
+                        <th scope="col" class="text-center">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deal, property_title in deals_pagination.items %}
+                        <tr>
+                            <td>{{ property_title }}</td>
+                            <td>{{ deal.client_name if deal.client_name else '-' }}</td>
+                            <td><span class="badge rounded-pill bg-primary badge-stage">{{ deal.stage }}</span></td>
+                            <td>{{ deal.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ deal.notes|truncate(70) if deal.notes else '-' }}</td>
+                            <td class="text-center">
+                                <a href="{{ url_for('main.client_edit_deal', deal_id=deal.id) }}" class="btn btn-sm btn-outline-primary me-1" title="تعديل الصفقة"><i class="fas fa-edit"></i></a>
+
+                                <div class="dropdown" style="display: inline-block;">
+                                    <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button" id="changeStageDropdown{{ deal.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-exchange-alt"></i> مرحلة
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="changeStageDropdown{{ deal.id }}">
+                                        {% for stage_value, stage_display in deal_stages_config %}
+                                            {% if deal.stage != stage_value %}
+                                            <li>
+                                                <form action="{{ url_for('main.client_change_deal_stage', deal_id=deal.id) }}" method="POST" class="d-inline">
+                                                    {{ csrf_token() }}
+                                                    <input type="hidden" name="new_stage" value="{{ stage_value }}">
+                                                    <input type="hidden" name="page" value="{{ deals_pagination.page }}">
+                                                    <input type="hidden" name="stage_filter" value="{{ current_stage_filter }}">
+                                                    <button type="submit" class="dropdown-item">{{ stage_display }}</button>
+                                                </form>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if deals_pagination.pages > 1 %}
+        <nav aria-label="Deal list navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {# Previous Page Link #}
+                {% if deals_pagination.has_prev %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('main.client_deal_tracker', page=deals_pagination.prev_num, stage_filter=current_stage_filter if current_stage_filter != 'all' else None) }}">&laquo; السابق</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo; السابق</span></li>
+                {% endif %}
+
+                {# Page Numbers #}
+                {% for page_num in deals_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if deals_pagination.page == page_num %}
+                            <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('main.client_deal_tracker', page=page_num, stage_filter=current_stage_filter if current_stage_filter != 'all' else None) }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                {# Next Page Link #}
+                {% if deals_pagination.has_next %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('main.client_deal_tracker', page=deals_pagination.next_num, stage_filter=current_stage_filter if current_stage_filter != 'all' else None) }}">التالي &raquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">التالي &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            لا توجد صفقات لعرضها حالياً.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

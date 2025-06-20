@@ -1,0 +1,90 @@
+{% extends "base.html" %} {# Or your admin base template, e.g., "admin/base.html" #}
+
+{% block title %}إضافة سكربت جديد{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-code-branch me-2"></i>إضافة سكربت جديد للمنصة</h2>
+    <hr>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.add_script_route') }}"> {# Ensure route name matches #}
+        {{ csrf_token() }} {# If using Flask-WTF CSRF protection #}
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="name" class="form-label">اسم السكربت (للعرض في المتجر)</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">وصف السكربت</label>
+                    <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="price" class="form-label">سعر المنتج (بالريال السعودي)</label>
+                    <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" value="0.00" required>
+                </div>
+
+                 <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="true" checked>
+                    <label class="form-check-label" for="is_active">تفعيل المنتج (جعله ظاهرًا في المتجر)</label>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="script_file" class="form-label">ملف السكربت (Python .py)</label>
+                    <input type="file" class="form-control" id="script_file" name="script_file" accept=".py" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="parameters" class="form-label">معلمات السكربت (بصيغة JSON)</label>
+                    <textarea class="form-control" id="parameters" name="parameters" rows="5" placeholder='مثال:&#10;{&#10;  "param1": "وصف للمتغير الأول",&#10;  "param2": "وصف للمتغير الثاني"&#10;}'></textarea>
+                    <small class="form-text text-muted">أدخل كائن JSON يصف المتغيرات التي يحتاجها السكربت. اتركها فارغة إذا لم تكن هناك حاجة لمتغيرات.</small>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i>إضافة السكربت</button>
+        <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-times-circle me-2"></i>إلغاء</a> {# Or back to script management page #}
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Optional: Basic client-side JSON validation for parameters
+const parametersTextarea = document.getElementById('parameters');
+if (parametersTextarea) {
+    parametersTextarea.addEventListener('blur', function() {
+        const value = this.value.trim();
+        if (value === "" || value === "{}") { // Allow empty or empty object
+            this.classList.remove('is-invalid');
+            return;
+        }
+        try {
+            JSON.parse(value);
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        } catch (e) {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+        }
+    });
+}
+</script>
+{% endblock %}

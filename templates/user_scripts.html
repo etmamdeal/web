@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}سكربتات {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2><i class="fas fa-code"></i> سكربتات {{ user.full_name }}</h2>
+        <p class="text-muted">{{ user.email }} | {{ user.phone }}</p>
+    </div>
+    <a href="{{ url_for('manage_users') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-right"></i> عودة
+    </a>
+</div>
+
+{% if scripts %}
+<div class="row">
+    {% for script in scripts %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ script.name }}</h5>
+                <span class="script-status badge bg-{{ script_status_color(script.status) }}">
+                    {{ script.status }}
+                </span>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ script.description or 'لا يوجد وصف' }}</p>
+                
+                <div class="mt-3">
+                    <h6>إعدادات السكربت:</h6>
+                    {% if script.config_data %}
+                    <pre class="bg-light p-2 rounded"><code>{{ script.config_data }}</code></pre>
+                    {% else %}
+                    <p class="text-muted">لا توجد إعدادات</p>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3">
+                    <h6>آخر تشغيل:</h6>
+                    {% if script.last_run %}
+                    <p class="mb-1">التاريخ: {{ script.last_run.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p class="mb-0">النتيجة: 
+                        <span class="badge bg-{{ 'success' if script.last_run_status == 'success' else 'danger' }}">
+                            {{ script.last_run_status }}
+                        </span>
+                    </p>
+                    {% else %}
+                    <p class="text-muted">لم يتم التشغيل بعد</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="btn-group w-100">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#viewCode{{ script.id }}">
+                        <i class="fas fa-eye"></i> عرض الكود
+                    </button>
+                    {% if script.status == 'pending' %}
+                    <a href="{{ url_for('approve_script_api', script_id=script.id) }}" class="btn btn-success">
+                        <i class="fas fa-check"></i> موافقة
+                    </a>
+                    {% endif %}
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteScript{{ script.id }}">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal عرض الكود -->
+        <div class="modal fade" id="viewCode{{ script.id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">كود {{ script.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <pre class="bg-light p-3 rounded"><code>{{ script.content }}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal حذف السكربت -->
+        <div class="modal fade" id="deleteScript{{ script.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">تأكيد حذف السكربت</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>هل أنت متأكد من حذف سكربت "{{ script.name }}"؟</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <a href="{{ url_for('delete_script_api', script_id=script.id) }}" class="btn btn-danger">تأكيد الحذف</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> لا توجد سكربتات لهذا المستخدم.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // تفعيل tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

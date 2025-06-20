@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة المستخدمين{% endblock %}
+
+{% block styles %}
+<style>
+/* تبسيط انتقالات المودال */
+.modal {
+    transition: opacity 0.15s ease-in-out;
+}
+
+/* تحسينات بسيطة للمودال */
+.modal-content {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">إدارة المستخدمين</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>الاسم الكامل</th>
+                            <th>اسم المستخدم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>رقم الجوال</th>
+                            <th>عدد السكربتات</th>
+                            <th>عدد التشغيلات</th>
+                            <th>العمليات الناجحة</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                            {% if not user.is_admin or current_user.id == 1 %}
+                            <tr>
+                                <td>{{ user.full_name }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.phone }}</td>
+                                <td>{{ user.scripts_count }}</td>
+                                <td>{{ user.runs_count }}</td>
+                                <td>
+                                    {% if user.runs_count > 0 %}
+                                        {{ (user.successful_runs / user.runs_count * 100)|round|int }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">مفعل</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">غير مفعل</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editModal{{ user.id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% if user.is_active %}
+                                            <a href="{{ url_for('manage_user_action', user_id=user.id, action='deactivate') }}" class="btn btn-sm btn-warning" onclick="return confirm('هل أنت متأكد من إلغاء تفعيل هذا الحساب؟')">
+                                                <i class="fas fa-ban"></i>
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('manage_user_action', user_id=user.id, action='activate') }}" class="btn btn-sm btn-success" onclick="return confirm('هل أنت متأكد من تفعيل هذا الحساب؟')">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('manage_user_action', user_id=user.id, action='delete') }}" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا الحساب؟ سيتم حذف جميع السكربتات المرتبطة به.')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جميع المودالات خارج الجدول -->
+{% for user in users %}
+    <div class="modal fade" id="editModal{{ user.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تعديل معلومات {{ user.username }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('edit_user', user_id=user.id) }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">الاسم الكامل</label>
+                            <input type="text" class="form-control" name="full_name" value="{{ user.full_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">رقم الجوال</label>
+                            <input type="tel" class="form-control" name="phone" value="{{ user.phone }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">كلمة المرور الجديدة (اتركها فارغة إذا لم ترد تغييرها)</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="password{{ user.id }}">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password{{ user.id }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const button = document.activeElement;
+    const icon = button.querySelector('i');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+</script>
+{% endblock %}

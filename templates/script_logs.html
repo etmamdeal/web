@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}سجل تشغيل السكربتات - منصة إتمام{% endblock %}
+
+{% block styles %}
+<style>
+.log-table {
+    font-size: 14px;
+}
+.log-output {
+    max-width: 500px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: monospace;
+    font-size: 12px;
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+}
+.log-error {
+    color: #dc3545;
+}
+.script-name {
+    font-weight: 500;
+    color: #0d6efd;
+}
+.filter-section {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0">
+                <i class="fas fa-history me-2"></i>
+                سجل تشغيل السكربتات
+            </h2>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- قسم التصفية -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body filter-section">
+            <form id="filterForm" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">السكربت</label>
+                    <select class="form-select" id="scriptFilter">
+                        <option value="">الكل</option>
+                        {% for script in scripts %}
+                            <option value="{{ script.id }}">{{ script.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">الحالة</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">الكل</option>
+                        <option value="success">ناجح</option>
+                        <option value="error">فاشل</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">من تاريخ</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">إلى تاريخ</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {% if logs %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle log-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ والوقت</th>
+                                <th>السكربت</th>
+                                <th>الحالة</th>
+                                <th>النتيجة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td style="width: 180px">{{ log.executed_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td style="width: 200px">
+                                    <span class="script-name">{{ log.script.name }}</span>
+                                </td>
+                                <td style="width: 100px">
+                                    <span class="badge bg-{{ 'success' if log.status == 'success' else 'danger' }}">
+                                        {{ 'ناجح' if log.status == 'success' else 'فاشل' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if log.output %}
+                                        <div class="log-output">{{ log.output }}</div>
+                                    {% endif %}
+                                    {% if log.error %}
+                                        <div class="log-output log-error">{{ log.error }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">لا يوجد سجلات تشغيل حتى الآن</h4>
+                    <p class="text-muted">ستظهر هنا سجلات تشغيل السكربتات الخاصة بك</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تفعيل التصفية
+    const filterForm = document.getElementById('filterForm');
+    const scriptFilter = document.getElementById('scriptFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+
+    // دالة تحديث الجدول
+    function updateTable() {
+        const rows = document.querySelectorAll('.log-table tbody tr');
+        rows.forEach(row => {
+            let show = true;
+
+            // تصفية حسب السكربت
+            if (scriptFilter.value) {
+                const scriptName = row.querySelector('.script-name').textContent;
+                const option = scriptFilter.options[scriptFilter.selectedIndex];
+                if (option.textContent !== scriptName) {
+                    show = false;
+                }
+            }
+
+            // تصفية حسب الحالة
+            if (statusFilter.value) {
+                const status = row.querySelector('.badge').textContent.trim();
+                const isSuccess = status === 'ناجح';
+                if ((statusFilter.value === 'success' && !isSuccess) || 
+                    (statusFilter.value === 'error' && isSuccess)) {
+                    show = false;
+                }
+            }
+
+            // تصفية حسب التاريخ
+            if (startDate.value || endDate.value) {
+                const dateStr = row.querySelector('td').textContent.split(' ')[0];
+                const rowDate = new Date(dateStr);
+                
+                if (startDate.value && new Date(startDate.value) > rowDate) {
+                    show = false;
+                }
+                if (endDate.value && new Date(endDate.value) < rowDate) {
+                    show = false;
+                }
+            }
+
+            row.style.display = show ? '' : 'none';
+        });
+    }
+
+    // تفعيل التصفية عند تغيير أي حقل
+    filterForm.querySelectorAll('select, input').forEach(element => {
+        element.addEventListener('change', updateTable);
+    });
+});
+</script>
+{% endblock %} 

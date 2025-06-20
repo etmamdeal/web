@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة تتبع الصفقات - رؤية خط الأنابيب{% endblock %} {# Deals Pipeline - Pipeline View #}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .pipeline-board {
+        display: flex;
+        overflow-x: auto; /* Enables horizontal scrolling for the columns */
+        padding-bottom: 20px; /* Space for scrollbar if it appears */
+        min-height: 70vh; /* Minimum height for the board area */
+    }
+    .pipeline-column {
+        flex: 0 0 300px; /* Fixed width for each column, adjust as needed. Do not shrink, do not grow. */
+        max-width: 300px; /* Ensure it doesn't exceed this width */
+        margin-right: 15px; /* Spacing between columns */
+        background-color: #f8f9fa; /* Light background for columns */
+        border-radius: 5px;
+        /* Removed height: 100% as card h-100 on child will handle it better with flex parent */
+    }
+    .pipeline-column:last-child {
+        margin-right: 0;
+    }
+    .column-header {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        background-color: #e9ecef; /* Slightly darker header for column */
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+    }
+    .column-header h6 {
+        margin-bottom: 0;
+        font-weight: bold;
+        text-align: center;
+    }
+    .deals-in-column {
+        padding: 10px;
+        overflow-y: auto; /* Allows scrolling within a column if many deals */
+        height: calc(100% - 58px); /* Adjust based on header height to fill column space if card is h-100 */
+                                /* This is tricky without JS, might need fixed height for columns or cards */
+    }
+    .deal-card-pipeline { /* Renamed to avoid conflict if .deal-card has other global styles */
+        border: 1px solid #dee2e6;
+        transition: box-shadow .1s ease-in-out;
+    }
+    .deal-card-pipeline:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+    }
+    .deal-card-pipeline .card-body {
+        padding: 0.8rem;
+    }
+    .deal-card-pipeline .card-subtitle {
+        font-weight: bold;
+        color: #007bff;
+    }
+    .deal-card-pipeline p {
+        margin-bottom: 0.3rem;
+    }
+    .no-deals {
+        text-align: center;
+        color: #6c757d;
+        margin-top: 2rem;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-project-diagram me-2"></i>مخطط صفقاتي</h2>
+        <div>
+            <a href="{{ url_for('main.client_deal_tracker') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-2"></i>عرض القائمة
+            </a>
+            <a href="{{ url_for('main.client_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>العودة إلى لوحة التحكم
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h1 class="display-4 mb-4 text-center">مراحل الصفقات</h1>
+
+    {% set stage_icons = {
+        'New Lead': 'fa-user-plus',
+        'Showing Scheduled': 'fa-calendar-alt',
+        'Negotiation': 'fa-handshake',
+        'Contract Signing': 'fa-file-signature',
+        'Pending - Finance/Inspection': 'fa-hourglass-half',
+        'Closed - Won': 'fa-check-circle',
+        'Closed - Lost': 'fa-times-circle',
+        'On Hold': 'fa-pause-circle',
+        '_OTHER_': 'fa-question-circle'
+    } %}
+    {% set stage_names_ar = {
+        'New Lead': 'عميل جديد',
+        'Showing Scheduled': 'موعد معاينة',
+        'Negotiation': 'تفاوض',
+        'Contract Signing': 'توقيع العقد',
+        'Pending - Finance/Inspection': 'بانتظار التمويل/الفحص',
+        'Closed - Won': 'مغلقة - ناجحة',
+        'Closed - Lost': 'مغلقة - لم تتم',
+        'On Hold': 'معلقة',
+        '_OTHER_': 'أخرى'
+    } %}
+
+    <div class="pipeline-board">
+        {# Iterate through deal_stages_config to maintain the defined order of columns #}
+        {% for stage_key, stage_config_info in deals_by_stage.items() %}
+            <div class="pipeline-column" style="background-color: {{ stage_color(loop.index0) }};">
+                <div class="card h-100"> {# Use h-100 to make card fill column height #}
+                    <div class="column-header">
+                        <h6>
+                            <i class="fas {{ stage_icons.get(stage_key, 'fa-question-circle') }} me-1"></i>
+                            {{ stage_names_ar.get(stage_key, stage_config_info.display_name) }} ({{ stage_config_info.deals|length }})
+                        </h6>
+                    </div>
+                    <div class="card-body deals-in-column" id="stage-col-{{ stage_key.replace(' ', '-').replace('/', '-')|lower }}">
+                        {% if stage_config_info.deals %}
+                            {% for deal in stage_config_info.deals %}
+                                <div class="card deal-card-pipeline mb-2 shadow-sm">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2">{{ deal.property_title }}</h6>
+                                        <p class="card-text small mb-1"><strong>العميل:</strong> {{ deal.client_name if deal.client_name else "غير محدد" }}</p>
+                                        {% if deal.notes %}
+                                        <p class="card-text small text-muted mb-1" title="{{ deal.notes }}">
+                                            <strong>ملاحظات:</strong> {{ deal.notes|truncate(35) }}
+                                        </p>
+                                        {% endif %}
+                                        <p class="card-text small text-muted">
+                                            <small>آخر تحديث: {{ deal.updated_at.strftime('%Y-%m-%d') }}</small>
+                                        </p>
+                                        <a href="{{ url_for('main.client_edit_deal', deal_id=deal.id) }}" class="btn btn-sm btn-outline-primary mt-2 w-100 stretched-link">عرض/تعديل التفاصيل</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-deals">لا توجد صفقات في هذه المرحلة.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{# Add any specific JS for this page if needed in future, e.g., for drag-and-drop #}
+{% endblock %}
+
+{% macro stage_color(index) %}
+    {%- set colors = ['#e3f2fd', '#fff3cd', '#e8f5e9', '#fce4ec', '#ede7f6', '#f3e5f5', '#fbe9e7', '#f9fbe7', '#eceff1'] -%}
+    {{ colors[index % colors|length] }}
+{% endmacro %}

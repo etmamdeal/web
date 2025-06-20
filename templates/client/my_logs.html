@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}سجل العمليات - منصة إتمام{% endblock %}
+
+{% block styles %}
+<style>
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .status-badge {
+        font-size: 0.9em;
+        padding: 0.4em 0.7em;
+    }
+    .output-modal .modal-body {
+        white-space: pre-wrap; /* Preserve whitespace and newlines */
+        word-wrap: break-word; /* Break long words */
+        max-height: 70vh;
+        overflow-y: auto;
+        font-family: monospace;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        padding: 1rem;
+        border-radius: .25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-history me-2"></i>سجل العمليات</h2>
+        <a href="{{ url_for('main.client_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>العودة إلى لوحة التحكم
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if filter_active_script_name %}
+    <div class="alert alert-info" role="alert">
+        يتم عرض السجلات للسكربت: <strong>{{ filter_active_script_name }}</strong>.
+        <a href="{{ url_for('main.client_my_logs') }}" class="alert-link">عرض كل السجلات</a>.
+    </div>
+    {% endif %}
+
+    {% if logs_pagination.items %}
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">اسم السكربت</th>
+                                <th scope="col">وقت التنفيذ</th>
+                                <th scope="col">الحالة</th>
+                                <th scope="col">الناتج/الخطأ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log_item in logs_pagination.items %}
+                                {% set log, script_name = log_item %}
+                                <tr>
+                                    <td>{{ script_name }}</td>
+                                    <td>{{ log.executed_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        {% if log.status == 'success' or log.status == 'completed' %}
+                                            <span class="badge bg-success status-badge">{{ log.status }}</span>
+                                        {% elif log.status == 'error' or log.status == 'failed' %}
+                                            <span class="badge bg-danger status-badge">{{ log.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark status-badge">{{ log.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.output or log.error %}
+                                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#outputModal{{ log.id }}">
+                                                <i class="fas fa-eye me-1"></i> عرض التفاصيل
+                                            </button>
+                                            <!-- Modal for output/error -->
+                                            <div class="modal fade output-modal" id="outputModal{{ log.id }}" tabindex="-1" aria-labelledby="outputModalLabel{{ log.id }}" aria-hidden="true">
+                                                <div class="modal-dialog modal-lg modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="outputModalLabel{{ log.id }}">تفاصيل التنفيذ للسكربت: {{ script_name }}</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            {% if log.output %}
+                                                                <h6>الناتج:</h6>
+                                                                <pre><code>{{ log.output }}</code></pre>
+                                                            {% endif %}
+                                                            {% if log.error %}
+                                                                <h6 class="mt-3">الخطأ:</h6>
+                                                                <pre><code class="text-danger">{{ log.error }}</code></pre>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">لا يوجد ناتج</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if logs_pagination.pages > 1 %}
+        <nav aria-label="Log navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {# Previous Page Link #}
+                {% if logs_pagination.has_prev %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('main.client_my_logs', page=logs_pagination.prev_num, **({'userscript_id_filter': userscript_id_filter} if userscript_id_filter else {})) }}">&laquo; السابق</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo; السابق</span></li>
+                {% endif %}
+
+                {# Page Numbers #}
+                {% for page_num in logs_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if logs_pagination.page == page_num %}
+                            <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('main.client_my_logs', page=page_num, **({'userscript_id_filter': userscript_id_filter} if userscript_id_filter else {})) }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                {# Next Page Link #}
+                {% if logs_pagination.has_next %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('main.client_my_logs', page=logs_pagination.next_num, **({'userscript_id_filter': userscript_id_filter} if userscript_id_filter else {})) }}">التالي &raquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">التالي &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            لا يوجد سجل عمليات لعرضه حتى الآن.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

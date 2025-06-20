@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل حساب جديد - منصة إتمام{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 text-center">
+                        <i class="fas fa-user-plus me-2"></i>تسجيل حساب جديد
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form id="registerForm" action="{{ url_for('main.register') }}" method="post" class="needs-validation" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">الاسم الكامل</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" name="full_name" required
+                                           pattern=".{3,}"
+                                           title="الاسم يجب أن يكون 3 أحرف على الأقل">
+                                    <div class="invalid-feedback">
+                                        يرجى إدخال الاسم الكامل (3 أحرف على الأقل)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">اسم المستخدم</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-at"></i></span>
+                                    <input type="text" class="form-control" name="username" required
+                                           pattern="[a-zA-Z0-9_]{3,}"
+                                           title="اسم المستخدم يجب أن يحتوي على أحرف وأرقام وشرطة سفلية فقط">
+                                    <div class="invalid-feedback">
+                                        اسم المستخدم يجب أن يحتوي على أحرف وأرقام وشرطة سفلية فقط
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">البريد الإلكتروني</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" class="form-control" name="email" required>
+                                    <div class="invalid-feedback">
+                                        يرجى إدخال بريد إلكتروني صحيح
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">رقم الجوال</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                    <input type="tel" class="form-control" name="phone" required
+                                           pattern="[0-9]{10}"
+                                           title="رقم الجوال يجب أن يكون 10 أرقام">
+                                    <div class="invalid-feedback">
+                                        يرجى إدخال رقم جوال صحيح (10 أرقام)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">كلمة المرور</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" class="form-control" name="password" id="password" required
+                                           minlength="6"
+                                           title="كلمة المرور يجب أن تكون 6 أحرف على الأقل">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('password', 'togglePasswordIcon')">
+                                        <i id="togglePasswordIcon" class="fas fa-eye"></i>
+                                    </button>
+                                    <div class="invalid-feedback">
+                                        كلمة المرور يجب أن تكون 6 أحرف على الأقل
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">تأكيد كلمة المرور</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" class="form-control" name="confirm_password" id="confirmPassword" required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('confirmPassword', 'toggleConfirmPasswordIcon')">
+                                        <i id="toggleConfirmPasswordIcon" class="fas fa-eye"></i>
+                                    </button>
+                                    <div class="invalid-feedback">
+                                        كلمتا المرور غير متطابقتين
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary py-2">
+                                <i class="fas fa-user-plus me-2"></i>تسجيل الحساب
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center py-3">
+                    <p class="mb-0">لديك حساب بالفعل؟ 
+                        <a href="{{ url_for('main.client_login') }}" class="text-primary text-decoration-none">
+                            تسجيل الدخول <i class="fas fa-sign-in-alt ms-1"></i>
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// تفعيل التحقق من النموذج
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+
+            // التحقق من تطابق كلمتي المرور
+            const password = document.getElementById('password')
+            const confirmPassword = document.getElementById('confirmPassword')
+            if (password.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('كلمتا المرور غير متطابقتين')
+                event.preventDefault()
+                event.stopPropagation()
+            } else {
+                confirmPassword.setCustomValidity('')
+            }
+
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
+// دالة إظهار/إخفاء كلمة المرور
+function togglePasswordVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// التحقق المباشر من تطابق كلمتي المرور
+document.getElementById('confirmPassword').addEventListener('input', function() {
+    const password = document.getElementById('password')
+    if (this.value !== password.value) {
+        this.setCustomValidity('كلمتا المرور غير متطابقتين')
+    } else {
+        this.setCustomValidity('')
+    }
+})
+</script>
+{% endblock %}
+{% endblock %}

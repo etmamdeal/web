@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة السكربتات - منصة إتمام{% endblock %}
+
+{% block styles %}
+<style>
+.script-name {
+    max-width: 300px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+.script-description {
+    max-width: 400px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+.btn-group .btn {
+    margin-right: 2px;
+}
+.tooltip-inner {
+    max-width: 300px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0">
+                <i class="fas fa-code me-2"></i>
+                إدارة السكربتات
+            </h2>
+        </div>
+        <div class="col text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScriptModal">
+                <i class="fas fa-plus me-2"></i>إضافة سكربت جديد
+            </button>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>اسم السكربت</th>
+                            <th>الوصف</th>
+                            <th>تاريخ الإضافة</th>
+                            <th>الحالة</th>
+                            <th>عدد المستخدمين</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for script in scripts %}
+                        <tr>
+                            <td class="script-name">
+                                <div data-bs-toggle="tooltip" data-bs-placement="top" title="{{ script.name }}">
+                                    {{ script.name }}
+                                </div>
+                            </td>
+                            <td class="script-description">
+                                <div data-bs-toggle="tooltip" data-bs-placement="top" title="{{ script.description }}">
+                                    {{ script.description }}
+                                </div>
+                            </td>
+                            <td>{{ script.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <span class="badge bg-{{ script_status_color(script.status) }}">
+                                    {{ script.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ script.users|length }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#assignScriptModal{{ script.id }}">
+                                        <i class="fas fa-users"></i> تخصيص
+                                    </button>
+                                    {% if script.is_active %}
+                                    <a href="{{ url_for('manage_script_action', script_id=script.id, action='deactivate') }}" 
+                                       class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-pause"></i> إيقاف
+                                    </a>
+                                    {% else %}
+                                    <a href="{{ url_for('manage_script_action', script_id=script.id, action='activate') }}" 
+                                       class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-play"></i> تفعيل
+                                    </a>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-outline-info" 
+                                            onclick="previewScript('{{ script.name }}', '{{ script.description }}', '{{ script.code|escape }}')">
+                                        <i class="fas fa-eye"></i> معاينة
+                                    </button>
+                                    <a href="{{ url_for('manage_script_action', script_id=script.id, action='delete') }}" 
+                                       class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('هل أنت متأكد من حذف هذا السكربت؟')">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- مودال تخصيص السكربت -->
+                        <div class="modal fade" id="assignScriptModal{{ script.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">تخصيص السكربت للمستخدمين</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="{{ url_for('assign_script', script_id=script.id) }}" method="post">
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">اختر المستخدمين</label>
+                                                <select class="form-select" name="users[]" multiple required>
+                                                    {% for user in users %}
+                                                        {% if not user.is_admin %}
+                                                            <option value="{{ user.id }}" 
+                                                                    {% if script in user.scripts %}selected{% endif %}>
+                                                                {{ user.full_name }} ({{ user.username }})
+                                                            </option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <h6>المستخدمين المخصص لهم حالياً</h6>
+                                                <ul class="list-unstyled">
+                                                    {% for user_script in script.users %}
+                                                        <li>
+                                                            <i class="fas fa-user me-2"></i>
+                                                            {{ user_script.user.full_name }}
+                                                            <small class="text-muted">
+                                                                (تم التخصيص في {{ user_script.assigned_at.strftime('%Y-%m-%d') }})
+                                                            </small>
+                                                        </li>
+                                                    {% else %}
+                                                        <li class="text-muted">لم يتم تخصيص السكربت لأي مستخدم بعد</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                            <button type="submit" class="btn btn-primary">حفظ التخصيص</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة سكربت جديد -->
+<div class="modal fade" id="addScriptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة سكربت جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('add_script') }}" method="post" enctype="multipart/form-data" id="addScriptForm" onsubmit="return handleFormSubmit(event)">
+                <div class="modal-body">
+                    <div id="formErrors" class="alert alert-danger d-none">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span class="error-message"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم السكربت</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الوصف</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">كود السكربت</label>
+                        <div class="script-actions">
+                            <button type="button" class="btn btn-outline-primary" id="uploadBtn">
+                                <i class="fas fa-upload"></i>
+                                تحميل من الجهاز
+                            </button>
+                            <button type="button" class="btn btn-outline-success" id="saveBtn">
+                                <i class="fas fa-save"></i>
+                                حفظ كملف
+                            </button>
+                        </div>
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-2x mb-2"></i>
+                            <p class="mb-0">اسحب ملف السكربت هنا أو اضغط لتحميل ملف</p>
+                            <small class="text-muted d-block mt-2">الملفات المدعومة: .py, .js, .php, .sh</small>
+                            <input type="file" id="scriptFile" name="script_file" class="d-none" accept=".py,.js,.php,.sh">
+                        </div>
+                        <textarea class="form-control code-editor" name="code" id="codeEditor" rows="15" dir="ltr" placeholder="// اكتب كود السكربت هنا..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة السكربت
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+<script>
+// تفعيل التلميحات
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+});
+
+// دالة اختبار السكربت
+async function testScript(scriptId) {
+    try {
+        const response = await fetch(`/api/scripts/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                script_id: scriptId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('تم اختبار السكربت بنجاح: ' + data.result);
+        } else {
+            alert('خطأ في اختبار السكربت: ' + data.error);
+        }
+    } catch (error) {
+        alert('حدث خطأ أثناء اختبار السكربت');
+        console.error(error);
+    }
+}
+
+// تهيئة محرر الكود ومنطقة التحميل
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const scriptFile = document.getElementById('scriptFile');
+    const codeEditor = document.getElementById('codeEditor');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const addScriptForm = document.getElementById('addScriptForm');
+
+    // تطبيق تنسيق الكود
+    Prism.highlightAll();
+    
+    // تطبيق محرر الكود
+    document.querySelectorAll('.code-editor').forEach(function(element) {
+        element.style.fontFamily = 'monospace';
+        element.style.fontSize = '14px';
+        element.style.lineHeight = '1.5';
+        element.style.tabSize = '4';
+    });
+
+    // معالجة السحب والإفلات
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        handleFile(file);
+    });
+
+    // معالجة النقر على زر التحميل
+    uploadBtn.addEventListener('click', () => {
+        scriptFile.click();
+    });
+
+    // معالجة اختيار الملف
+    scriptFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        handleFile(file);
+    });
+
+    // معالجة الملف المحمل
+    function handleFile(file) {
+        if (!file) return;
+
+        // التحقق من امتداد الملف
+        const allowedExtensions = ['.py', '.js', '.php', '.sh'];
+        const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedExtensions.includes(fileExt)) {
+            alert('نوع الملف غير مدعوم. الأنواع المدعومة هي: ' + allowedExtensions.join(', '));
+            return;
+        }
+
+        // قراءة محتوى الملف
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            codeEditor.value = e.target.result;
+            // تحديث تنسيق الكود
+            Prism.highlightElement(codeEditor);
+        };
+        reader.onerror = () => {
+            alert('حدث خطأ أثناء قراءة الملف');
+        };
+        reader.readAsText(file);
+    }
+
+    // حفظ الكود كملف
+    saveBtn.addEventListener('click', () => {
+        const code = codeEditor.value;
+        if (!code.trim()) {
+            alert('الرجاء إدخال الكود أولاً');
+            return;
+        }
+
+        const blob = new Blob([code], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'script.py';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    });
+
+    // معالجة تقديم النموذج
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const formData = new FormData(form);
+        const errorsDiv = document.getElementById('formErrors');
+        const errorMessage = errorsDiv.querySelector('.error-message');
+        const submitButton = form.querySelector('button[type="submit"]');
+        
+        // التحقق من الحقول المطلوبة
+        const name = formData.get('name').trim();
+        const description = formData.get('description').trim();
+        const code = formData.get('code').trim();
+        const scriptFile = formData.get('script_file');
+        
+        if (!name) {
+            showError('يجب إدخال اسم السكربت');
+            return false;
+        }
+        
+        if (!description) {
+            showError('يجب إدخال وصف السكربت');
+            return false;
+        }
+        
+        if (!code && (!scriptFile || scriptFile.size === 0)) {
+            showError('يجب إدخال كود السكربت أو تحميل ملف');
+            return false;
+        }
+        
+        try {
+            // تعطيل زر الإرسال وإظهار حالة التحميل
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الحفظ...';
+            
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // إخفاء المودال
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addScriptModal'));
+                modal.hide();
+                
+                // عرض رسالة النجاح
+                showSuccessMessage(data.message);
+                
+                // إعادة تحميل الصفحة بعد ثانيتين
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showError(data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى.');
+        } finally {
+            // إعادة تفعيل زر الإرسال
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-plus me-1"></i>إضافة السكربت';
+        }
+        
+        return false;
+    }
+
+    // دالة لعرض رسالة الخطأ
+    function showError(message) {
+        const errorsDiv = document.getElementById('formErrors');
+        const errorMessage = errorsDiv.querySelector('.error-message');
+        errorMessage.textContent = message;
+        errorsDiv.classList.remove('d-none');
+    }
+
+    // دالة لعرض رسالة النجاح
+    function showSuccessMessage(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.card'));
+    }
+
+    // إعادة تعيين النموذج عند إغلاق المودال
+    document.getElementById('addScriptModal').addEventListener('hidden.bs.modal', function () {
+        const form = document.getElementById('addScriptForm');
+        const errorsDiv = document.getElementById('formErrors');
+        const codeEditor = document.getElementById('codeEditor');
+        
+        form.reset();
+        errorsDiv.classList.add('d-none');
+        codeEditor.value = '';
+        
+        // إعادة تعيين منطقة تحميل الملف
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.classList.remove('drag-over');
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+<style>
+.code-editor {
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    tab-size: 4;
+    white-space: pre;
+    background-color: #f8f9fa;
+    width: 100%;
+    min-height: 300px;
+    padding: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.upload-area {
+    border: 2px dashed #ced4da;
+    border-radius: 0.25rem;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover,
+.upload-area.drag-over {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.script-actions {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.script-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.script-actions button i {
+    font-size: 1rem;
+}
+</style>
+{% endblock %}
+{% endblock %} 

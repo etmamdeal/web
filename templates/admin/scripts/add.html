@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">إضافة سكربت جديد</h1>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">تحميل ملف السكربت</h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="script_file">ملف السكربت (Python)</label>
+                    <input type="file" class="form-control-file" id="script_file" name="script_file" accept=".py" required>
+                    <small class="form-text text-muted">
+                        يجب أن يحتوي الملف على دالة رئيسية واحدة على الأقل مع المتغيرات المطلوبة.
+                    </small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> تحميل وتحليل
+                </button>
+                <a href="{{ url_for('list_scripts') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> عودة
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

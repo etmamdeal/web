@@ -1,0 +1,330 @@
+{% extends "admin/base.html" %}
+
+{% block title %}إدارة المنتجات{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>إدارة المنتجات</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScriptModal">
+            <i class="fas fa-plus"></i> إضافة سكربت جديد
+        </button>
+    </div>
+
+    <!-- Modal إضافة سكربت -->
+    <div class="modal fade" id="addScriptModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">إضافة سكربت جديد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addScriptForm" method="POST" action="{{ url_for('main.add_script') }}" enctype="multipart/form-data">
+                        <!-- معلومات السكربت الأساسية -->
+                        <div class="mb-3">
+                            <label class="form-label">اسم السكربت</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">الوصف</label>
+                            <textarea class="form-control" name="description" rows="3" required></textarea>
+                        </div>
+
+                        <!-- متغيرات السكربت -->
+                        <div class="mb-3">
+                            <label class="form-label">متغيرات السكربت</label>
+                            <div id="scriptVariables" class="border rounded p-3">
+                                <div class="variables-list">
+                                    <!-- سيتم إضافة المتغيرات هنا -->
+                                </div>
+                                <button type="button" class="btn btn-outline-primary mt-2" onclick="addVariable()">
+                                    <i class="fas fa-plus"></i> إضافة متغير
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- محرر الكود -->
+                        <div class="mb-3">
+                            <label class="form-label">كود السكربت</label>
+                            <div class="code-editor-wrapper">
+                                <div id="codeEditor" class="form-control" style="height: 300px;"></div>
+                                <input type="hidden" name="code" id="codeInput">
+                            </div>
+                        </div>
+
+                        <!-- خيارات متقدمة -->
+                        <div class="mb-3">
+                            <label class="form-label">خيارات متقدمة</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="validate_input" id="validateInput" checked>
+                                        <label class="form-check-label" for="validateInput">
+                                            التحقق من المدخلات
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="enable_formatting" id="enableFormatting" checked>
+                                        <label class="form-check-label" for="enableFormatting">
+                                            تنسيق المخرجات
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- أزرار التحكم -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                            <button type="button" class="btn btn-info" onclick="testScript()">
+                                <i class="fas fa-vial"></i> اختبار السكربت
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> حفظ السكربت
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة المنتجات -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>النوع</th>
+                    <th>الحالة</th>
+                    <th>تاريخ الإضافة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.type }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if product.is_active else 'warning' }}">
+                            {{ 'نشط' if product.is_active else 'غير نشط' }}
+                        </span>
+                    </td>
+                    <td>{{ product.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-info" onclick="editProduct({{ product.id }})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteProduct({{ product.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script>
+// تهيئة محرر الكود
+let editor = ace.edit("codeEditor");
+editor.setTheme("ace/theme/monokai");
+editor.session.setMode("ace/mode/python");
+editor.setOptions({
+    fontSize: "14px",
+    enableBasicAutocompletion: true,
+    enableLiveAutocompletion: true,
+    enableSnippets: true,
+    showPrintMargin: false
+});
+
+// إضافة متغير جديد
+function addVariable() {
+    const variableHtml = `
+        <div class="variable-item border-bottom pb-2 mb-2">
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" placeholder="اسم المتغير" name="var_names[]" required>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-control" name="var_types[]">
+                        <option value="text">نص</option>
+                        <option value="number">رقم</option>
+                        <option value="list">قائمة</option>
+                        <option value="boolean">نعم/لا</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" placeholder="القيمة الافتراضية" name="var_defaults[]">
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.querySelector('.variables-list').insertAdjacentHTML('beforeend', variableHtml);
+}
+
+// اختبار السكربت
+function testScript() {
+    // تجميع المتغيرات
+    const variables = {};
+    document.querySelectorAll('.variable-item').forEach(item => {
+        const name = item.querySelector('[name="var_names[]"]').value;
+        const type = item.querySelector('[name="var_types[]"]').value;
+        const defaultValue = item.querySelector('[name="var_defaults[]"]').value;
+        variables[name] = { type, value: defaultValue };
+    });
+
+    // تحضير بيانات الاختبار
+    const testData = {
+        code: editor.getValue(),
+        variables: variables
+    };
+
+    // إرسال طلب الاختبار
+    fetch('/api/scripts/test', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(testData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('خطأ: ' + data.error);
+        } else {
+            alert('تم اختبار السكربت بنجاح!\n\nالنتيجة: ' + data.result);
+        }
+    })
+    .catch(error => {
+        alert('حدث خطأ أثناء الاختبار: ' + error);
+    });
+}
+
+// حفظ السكربت
+document.getElementById('addScriptForm').onsubmit = function(e) {
+    e.preventDefault();
+    
+    // تحديث قيمة الكود
+    document.getElementById('codeInput').value = editor.getValue();
+    
+    // تجميع البيانات
+    const formData = new FormData(this);
+    
+    // إضافة المتغيرات
+    const variables = {};
+    document.querySelectorAll('.variable-item').forEach(item => {
+        const name = item.querySelector('[name="var_names[]"]').value;
+        const type = item.querySelector('[name="var_types[]"]').value;
+        const defaultValue = item.querySelector('[name="var_defaults[]"]').value;
+        variables[name] = { type, value: defaultValue };
+    });
+    formData.append('variables', JSON.stringify(variables));
+    
+    // إرسال الطلب
+    fetch('/api/scripts/save', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('خطأ: ' + data.error);
+        } else {
+            alert('تم حفظ السكربت بنجاح!');
+            location.reload();
+        }
+    })
+    .catch(error => {
+        alert('حدث خطأ أثناء الحفظ: ' + error);
+    });
+};
+
+// تحميل نموذج السكربت
+function loadScriptTemplate() {
+    const template = `# سكربت توليد وصف إعلاني تلقائي للعقار
+# إعداد: نزار & إتمام سيرفر
+
+def توليد_وصف_عقاري(نوع_العقار, المدينة, الحي, المساحة, السعر, المميزات):
+    وصف = f"للبيع {نوع_العقار} مميزة في {المدينة} - حي {الحي}.\\n"
+    وصف += f"تبلغ مساحتها {المساحة} م² وسعرها {السعر} ريال فقط.\\n"
+    وصف += "تتميز العقار بـ:\\n"
+
+    if isinstance(المميزات, list):
+        for ميزة in المميزات:
+            وصف += f"✔️ {ميزة}\\n"
+    else:
+        try:
+            for ميزة in المميزات.split(","):
+                وصف += f"✔️ {ميزة.strip()}\\n"
+        except:
+            وصف += f"{المميزات}\\n"
+
+    وصف += "\\nلا تفوت الفرصة وتواصل معنا الآن لمزيد من التفاصيل أو لحجز موعد زيارة."
+    return وصف`;
+    
+    editor.setValue(template);
+    editor.clearSelection();
+    
+    // إضافة المتغيرات التلقائية
+    document.querySelector('.variables-list').innerHTML = '';
+    const variables = [
+        { name: 'نوع_العقار', type: 'text', default: 'شقة' },
+        { name: 'المدينة', type: 'text', default: 'الرياض' },
+        { name: 'الحي', type: 'text', default: 'النرجس' },
+        { name: 'المساحة', type: 'number', default: '150' },
+        { name: 'السعر', type: 'number', default: '500000' },
+        { name: 'المميزات', type: 'list', default: 'مدخل خاص, مصعد, موقف سيارة' }
+    ];
+    
+    variables.forEach(v => {
+        const variableHtml = `
+            <div class="variable-item border-bottom pb-2 mb-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" placeholder="اسم المتغير" name="var_names[]" value="${v.name}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-control" name="var_types[]">
+                            <option value="text" ${v.type === 'text' ? 'selected' : ''}>نص</option>
+                            <option value="number" ${v.type === 'number' ? 'selected' : ''}>رقم</option>
+                            <option value="list" ${v.type === 'list' ? 'selected' : ''}>قائمة</option>
+                            <option value="boolean" ${v.type === 'boolean' ? 'selected' : ''}>نعم/لا</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" placeholder="القيمة الافتراضية" name="var_defaults[]" value="${v.default}">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.querySelector('.variables-list').insertAdjacentHTML('beforeend', variableHtml);
+    });
+}
+
+// تحميل النموذج عند فتح النافذة
+document.querySelector('[data-bs-target="#addScriptModal"]').addEventListener('click', loadScriptTemplate);
+</script>
+{% endblock %} 

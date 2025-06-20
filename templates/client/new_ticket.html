@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}إنشاء تذكرة دعم جديدة{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-plus-circle me-2"></i>إنشاء تذكرة دعم جديدة</h2>
+    <hr>
+
+    <form action="{{ url_for('main.client_new_ticket') }}" method="POST" id="ticketForm" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label for="ticket_type" class="form-label">نوع التذكرة</label>
+            <select class="form-select" id="ticket_type" name="ticket_type" required>
+                <option value="technical">دعم فني</option>
+                <option value="billing">استفسارات الفواتير</option>
+                <option value="general_inquiry">استفسار عام</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="subject" class="form-label">الموضوع</label>
+            <input type="text" class="form-control" id="subject" name="subject" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">وصف المشكلة/الاستفسار</label>
+            <textarea class="form-control" id="description" name="description" rows="6" required></textarea>
+        </div>
+
+        {# File attachment input could be added here in the future #}
+
+        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>إرسال التذكرة</button>
+        <a href="{{ url_for('main.client_list_tickets') }}" class="btn btn-secondary"><i class="fas fa-times me-2"></i>إلغاء</a>
+    </form>
+</div>
+{% endblock %}
