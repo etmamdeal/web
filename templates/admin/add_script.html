@@ -18,73 +18,85 @@
         {% endif %}
     {% endwith %}
 
-    <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.add_script_route') }}"> {# Ensure route name matches #}
-        {{ csrf_token() }} {# If using Flask-WTF CSRF protection #}
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.add_script_route') }}">
+        {{ form.hidden_tag() }} {# Includes CSRF token and other hidden fields #}
 
         <div class="row">
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label for="name" class="form-label">اسم السكربت (للعرض في المتجر)</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
+                    {{ form.name.label(class="form-label") }}
+                    {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), id="name") }}
+                    {% if form.name.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.name.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <div class="mb-3">
-                    <label for="description" class="form-label">وصف السكربت</label>
-                    <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="4", id="description") }}
+                    {% if form.description.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.description.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <div class="mb-3">
-                    <label for="price" class="form-label">سعر المنتج (بالريال السعودي)</label>
-                    <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" value="0.00" required>
+                    {{ form.price.label(class="form-label") }}
+                    {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else ""), id="price", step="0.01", min="0") }}
+                    {% if form.price.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.price.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
 
                  <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="true" checked>
-                    <label class="form-check-label" for="is_active">تفعيل المنتج (جعله ظاهرًا في المتجر)</label>
+                    {{ form.is_active(class="form-check-input" + (" is-invalid" if form.is_active.errors else ""), id="is_active") }}
+                    {{ form.is_active.label(class="form-check-label", for="is_active") }}
+                    {% if form.is_active.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.is_active.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label for="script_file" class="form-label">ملف السكربت (Python .py)</label>
-                    <input type="file" class="form-control" id="script_file" name="script_file" accept=".py" required>
+                    {{ form.script_file.label(class="form-label") }}
+                    {{ form.script_file(class="form-control" + (" is-invalid" if form.script_file.errors else ""), id="script_file", accept=".py") }}
+                    {% if form.script_file.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.script_file.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <div class="mb-3">
-                    <label for="parameters" class="form-label">معلمات السكربت (بصيغة JSON)</label>
-                    <textarea class="form-control" id="parameters" name="parameters" rows="5" placeholder='مثال:&#10;{&#10;  "param1": "وصف للمتغير الأول",&#10;  "param2": "وصف للمتغير الثاني"&#10;}'></textarea>
-                    <small class="form-text text-muted">أدخل كائن JSON يصف المتغيرات التي يحتاجها السكربت. اتركها فارغة إذا لم تكن هناك حاجة لمتغيرات.</small>
+                    {{ form.parameters.label(class="form-label") }}
+                    {{ form.parameters(class="form-control" + (" is-invalid" if form.parameters.errors else ""), rows="5", id="parameters", placeholder='مثال:\n{\n  "param_name1": "وصف للمتغير الأول",\n  "param_name2": "وصف للمتغير الثاني"\n}') }}
+                    {% if form.parameters.description %}
+                        <small class="form-text text-muted">{{ form.parameters.description }}</small>
+                    {% endif %}
+                    {% if form.parameters.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.parameters.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
         <hr>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i>إضافة السكربت</button>
-        <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-times-circle me-2"></i>إلغاء</a> {# Or back to script management page #}
+        {{ form.submit(class="btn btn-primary") }} {# Using WTForms submit field rendering #}
+        <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-times-circle me-2"></i>إلغاء</a>
     </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-// Optional: Basic client-side JSON validation for parameters
-const parametersTextarea = document.getElementById('parameters');
-if (parametersTextarea) {
-    parametersTextarea.addEventListener('blur', function() {
-        const value = this.value.trim();
-        if (value === "" || value === "{}") { // Allow empty or empty object
-            this.classList.remove('is-invalid');
-            return;
-        }
-        try {
-            JSON.parse(value);
-            this.classList.remove('is-invalid');
-            this.classList.add('is-valid');
-        } catch (e) {
-            this.classList.remove('is-valid');
-            this.classList.add('is-invalid');
-        }
-    });
-}
-</script>
+{# Client-side JSON validation script removed as server-side validation is now primary #}
 {% endblock %}

@@ -383,3 +383,85 @@ class Deal(db.Model):
 
     def __repr__(self):
         return f'<Deal {self.id} for Property {self.property_id}>'
+
+
+class GlobalSetting(db.Model):
+    __tablename__ = 'global_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    value = db.Column(db.Text, nullable=True)
+    description = db.Column(db.String(255), nullable=True)
+    value_type = db.Column(db.String(20), nullable=False, default='string') # e.g., string, integer, boolean, json
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<GlobalSetting {self.key}: {self.value[:50]}>'
+
+    @staticmethod
+    def get(key, default=None):
+        setting = GlobalSetting.query.filter_by(key=key).first()
+        if setting:
+            if setting.value_type == 'integer':
+                try:
+                    return int(setting.value)
+                except (ValueError, TypeError):
+                    # Optionally log an error here if the value in DB is not a valid integer
+                    # current_app.logger.warning(f"GlobalSetting '{key}' with value_type 'integer' has non-integer value: {setting.value}")
+                    return default
+            elif setting.value_type == 'boolean':
+                return setting.value.lower() in ['true', '1', 'yes', 'on']
+            elif setting.value_type == 'json':
+                try:
+                    return json.loads(setting.value)
+                except (json.JSONDecodeError, TypeError):
+                    # Optionally log an error
+                    # current_app.logger.warning(f"GlobalSetting '{key}' with value_type 'json' has invalid JSON: {setting.value}")
+                    return default
+            return setting.value # Default is string
+        return default
+
+    @staticmethod
+    def set(key, value, value_type='string', description=None):
+        setting = GlobalSetting.query.filter_by(key=key).first()
+
+        original_description = None
+        if not setting:
+            setting = GlobalSetting(key=key)
+            db.session.add(setting)
+        else:
+            original_description = setting.description
+
+        # Ensure value is stringified for Text DB column, or handle specific types
+        if value_type == 'json':
+            if isinstance(value, (dict, list)):
+                setting.value = json.dumps(value)
+            elif isinstance(value, str): # Allow pre-stringified JSON
+                 try:
+                    json.loads(value) # Validate if it's a string
+                    setting.value = value
+                 except json.JSONDecodeError:
+                    raise ValueError("String value for 'json' type is not valid JSON.")
+            else:
+                raise ValueError("Invalid value for 'json' type. Must be dict, list, or valid JSON string.")
+        elif value_type == 'boolean':
+            setting.value = "true" if value else "false"
+        elif value_type == 'integer':
+            try:
+                setting.value = str(int(value)) # Store as string after validation
+            except (ValueError, TypeError):
+                raise ValueError("Invalid value for 'integer' type.")
+        else: # string and other types
+            setting.value = str(value)
+
+        setting.value_type = value_type
+
+        # Update description only if it's explicitly provided and different from existing one,
+        # or if it's a new setting and description is provided.
+        if description is not None:
+            if setting.description != description:
+                 setting.description = description
+        elif original_description is not None and description is None: # If no new description is provided, keep the old one
+            setting.description = original_description
+
+        # Caller is responsible for db.session.commit()
+        return setting

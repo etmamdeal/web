@@ -26,7 +26,7 @@ import sys # For execute_python_script
 import os # For execute_python_script, path operations
 
 from .models import User, Property, Deal, Script, UserScript, RunLog, Role, Permission, Product, ProductType, Subscription, SubscriptionPeriod, Ebook, Database, Ticket, TicketMessage, TicketAttachment
-from .forms import ResetPasswordForm, ProfileForm, ChangePasswordForm, EditProductForm, PropertyForm, DealForm, DEAL_STAGES
+from .forms import ResetPasswordForm, ProfileForm, ChangePasswordForm, EditProductForm, PropertyForm, DealForm, DEAL_STAGES, AddScriptForm # Imported AddScriptForm
 from .extensions import db, login_manager
 from .auth import super_admin_required, admin_required, client_required, check_permission, check_role_and_redirect
 
@@ -1216,6 +1216,24 @@ def client_execute_script(userscript_id):
         current_app.logger.error(f"Script model ID {script_model.id} has no file_path defined.")
         return jsonify({'status': 'error', 'error_message': 'Script file path not configured.'}), 500
 
+    # --- Subscription Check ---
+    product_of_script = script_model.product_link
+    if not product_of_script:
+        current_app.logger.error(f"No product link found for Script ID: {script_model.id}")
+        return jsonify({'status': 'error', 'error_message': 'Script not associated with a product for subscription.'}), 500
+
+    active_subscription = Subscription.query.filter(
+        Subscription.user_id == current_user.id,
+        Subscription.product_id == product_of_script.id,
+        Subscription.is_active == True,
+        Subscription.start_date <= datetime.utcnow(),
+        Subscription.end_date >= datetime.utcnow()
+    ).first()
+
+    if not active_subscription:
+        current_app.logger.warning(f"User {current_user.id} attempted to execute script {script_model.id} (Product ID: {product_of_script.id}) without active subscription.")
+        return jsonify({'status': 'error', 'error_message': 'You do not have an active subscription for this script or your subscription has expired.'}), 403
+
     # --- Parameter Validation (Revised) ---
     submitted_params = request.json
     if not isinstance(submitted_params, dict):
@@ -1298,12 +1316,17 @@ def client_my_assigned_scripts():
         Product.name.label('product_name'),
         Product.description.label('product_description'),
         Script.id.label('script_id'),
-        Script.parameters.label('script_parameters_definition') # For building the execution form later
+        Script.parameters.label('script_parameters_definition'), # For building the execution form later
+        Subscription.end_date.label('subscription_end_date') # To display subscription validity
     ).join(Script, UserScript.script_id == Script.id)\
      .join(Product, Script.id == Product.script_id)\
+     .join(Subscription, (Subscription.product_id == Product.id) & (Subscription.user_id == current_user.id))\
      .filter(UserScript.user_id == current_user.id)\
      .filter(Product.type == ProductType.SCRIPT)\
      .filter(Product.is_active == True)\
+     .filter(Subscription.is_active == True)\
+     .filter(Subscription.start_date <= datetime.utcnow())\
+     .filter(Subscription.end_date >= datetime.utcnow())\
      .order_by(Product.name).all()
 
     scripts_with_logs = []
@@ -1324,7 +1347,8 @@ def client_my_assigned_scripts():
             'product_description': item.product_description,
             'script_id': item.script_id,
             'script_parameters_definition_json': json.dumps(params_def), # Ensure it's valid JSON
-            'last_logs': last_logs
+            'last_logs': last_logs,
+            'subscription_end_date': item.subscription_end_date.strftime('%Y-%m-%d') if item.subscription_end_date else "N/A"
         })
 
     return render_template('client/assigned_scripts_list.html',
@@ -1337,51 +1361,24 @@ def client_my_assigned_scripts():
 # Admin route to add a new script
 @bp.route('/admin/add-script', methods=['GET', 'POST'])
 @admin_required
-def add_script_route(): # Renamed to avoid conflict if 'add_script' is used elsewhere
-    if request.method == 'POST':
+def add_script_route():
+    form = AddScriptForm()
+    if form.validate_on_submit():
         try:
-            script_name = request.form.get('name')
-            description = request.form.get('description')
-            parameters_str = request.form.get('parameters', '{}') # Default to empty JSON object
-            price = request.form.get('price', 0.0)
-            is_active = request.form.get('is_active') == 'true'
+            script_name = form.name.data
+            description = form.description.data
+            parameters_str = form.parameters.data # Validator ensures JSON or empty
+            price = form.price.data
+            is_active = form.is_active.data
+            file = form.script_file.data # FileStorage object
 
-            if 'script_file' not in request.files:
-                flash('لم يتم اختيار ملف للسكربت!', 'danger')
-                return redirect(request.url)
-
-            file = request.files['script_file']
-
-            if file.filename == '':
-                flash('لم يتم اختيار ملف للسكربت!', 'danger')
-                return redirect(request.url)
-
-            if not file.filename.endswith('.py'):
-                flash('الملف المسموح به هو .py فقط', 'danger')
-                return redirect(request.url)
-
-            # Validate parameters as JSON
-            try:
-                parameters_json = json.loads(parameters_str) if parameters_str.strip() else {}
-            except json.JSONDecodeError:
-                flash('صيغة معلمات السكربت (JSON) غير صحيحة.', 'danger')
-                return redirect(request.url)
+            # parameters_str will be an empty string if not provided, or valid JSON string
+            parameters_json = json.loads(parameters_str) if parameters_str and parameters_str.strip() else {}
 
             # Securely save the file
             filename = secure_filename(file.filename)
-            # Construct path relative to the app's instance folder or a configured UPLOAD_FOLDER
-            # For consistency, ensure UPLOAD_FOLDER and its subdirectories are handled correctly.
-            # Assuming current_app.config['UPLOAD_FOLDER'] = 'uploads' (relative to instance or app root)
-            # and we want scripts in a 'scripts' subfolder of that.
-
-            # Path should be relative to the application root or instance path for portability
-            # If UPLOAD_FOLDER is 'uploads', this will be 'uploads/scripts'
             scripts_upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'scripts')
 
-            # Create the directory if it doesn't exist (it should be created by config.init_app)
-            # For absolute path, one might use current_app.root_path or current_app.instance_path
-            # Here, we assume UPLOAD_FOLDER is relative from where app runs or an absolute path itself.
-            # If UPLOAD_FOLDER is relative, let's make it relative to app.root_path for clarity
             if not os.path.isabs(scripts_upload_folder):
                  scripts_upload_path = os.path.join(current_app.root_path, scripts_upload_folder)
             else:
@@ -1392,9 +1389,7 @@ def add_script_route(): # Renamed to avoid conflict if 'add_script' is used else
             file_path_for_db = os.path.join(scripts_upload_folder, filename) # Path to store in DB (relative)
             absolute_file_path = os.path.join(scripts_upload_path, filename) # Absolute path to save file
 
-            # Check for filename collision (optional, but good practice)
             if os.path.exists(absolute_file_path):
-                # Add a unique prefix/suffix or reject
                 base, ext = os.path.splitext(filename)
                 new_filename = f"{base}_{int(datetime.now().timestamp())}{ext}"
                 absolute_file_path = os.path.join(scripts_upload_path, new_filename)
@@ -1402,20 +1397,18 @@ def add_script_route(): # Renamed to avoid conflict if 'add_script' is used else
 
             file.save(absolute_file_path)
 
-            # Create Script object (actual script details)
             new_script_obj = Script(
-                name=script_name, # Or a more internal name if Product.name is primary display name
-                description=description, # Or perhaps Script model has its own detailed/technical description
-                file_path=file_path_for_db, # Store relative path in DB
+                name=script_name,
+                description=description, # Consider if Script model needs its own description or uses Product's
+                file_path=file_path_for_db,
                 parameters=parameters_json,
                 created_by=current_user.id,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
             db.session.add(new_script_obj)
-            db.session.flush() # Flush to get new_script_obj.id for the Product
+            db.session.flush()
 
-            # Create Product object (store/shop listing)
             new_product = Product(
                 name=script_name,
                 description=description,
@@ -1423,7 +1416,7 @@ def add_script_route(): # Renamed to avoid conflict if 'add_script' is used else
                 price=float(price),
                 is_active=is_active,
                 created_by=current_user.id,
-                script_id=new_script_obj.id, # Link to the Script object
+                script_id=new_script_obj.id,
                 created_at=datetime.utcnow(),
                 last_modified=datetime.utcnow()
             )
@@ -1431,15 +1424,19 @@ def add_script_route(): # Renamed to avoid conflict if 'add_script' is used else
             db.session.commit()
 
             flash(f'تمت إضافة السكربت "{script_name}" بنجاح!', 'success')
-            return redirect(url_for('main.admin_dashboard')) # Or a script management page
+            # Redirect to admin dashboard or a page showing all scripts/products
+            if current_user.is_super_admin:
+                 return redirect(url_for('main.super_admin_dashboard'))
+            return redirect(url_for('main.admin_dashboard'))
 
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error adding new script: {str(e)}")
             flash('حدث خطأ أثناء إضافة السكربت. الرجاء المحاولة مرة أخرى.', 'danger')
-            return redirect(request.url)
+            # No redirect(request.url) here, will fall through to render_template with form errors
 
-    return render_template('admin/add_script.html')
+    # For GET requests or if form validation fails
+    return render_template('admin/add_script.html', form=form)
 
 # Client Ticket System Routes
 @bp.route('/client/tickets/new', methods=['GET', 'POST'], endpoint='client_new_ticket')
@@ -2138,3 +2135,32 @@ def super_admin_view_ticket(ticket_id):
     available_statuses = ['open', 'in_progress', 'closed', 'resolved']
     available_priorities = ['low', 'medium', 'high', 'urgent']
     return render_template('super_admin_view_ticket.html', ticket=ticket, messages=messages, available_statuses=available_statuses, available_priorities=available_priorities)
+
+# --- CLI Commands ---
+@bp.cli.command("deactivate-expired-subscriptions")
+def deactivate_expired_subscriptions_command():
+    """
+    Deactivates subscriptions that have passed their end_date.
+    """
+    try:
+        now = datetime.utcnow()
+        expired_subscriptions = Subscription.query.filter(
+            Subscription.end_date < now,
+            Subscription.is_active == True
+        ).all()
+
+        if not expired_subscriptions:
+            print("No expired subscriptions found to deactivate.")
+            return
+
+        count = 0
+        for sub in expired_subscriptions:
+            sub.is_active = False
+            count += 1
+
+        db.session.commit()
+        print(f"Deactivated {count} expired subscriptions.")
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deactivating subscriptions: {str(e)}")

@@ -5,7 +5,8 @@ from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationE
 from flask_login import current_user
 from .models import User, Product, ProductType
 from werkzeug.security import check_password_hash
-from flask_wtf.file import FileAllowed, MultipleFileField
+from flask_wtf.file import FileAllowed, MultipleFileField, FileField # Added FileField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange, Optional, FileRequired # Added FileRequired
 from .extensions import db
 
 
@@ -46,7 +47,7 @@ class EditProductForm(FlaskForm):
     price = FloatField('Price (SAR)', validators=[DataRequired(), NumberRange(min=0)])
     is_active = BooleanField('Product Active (visible in store)')
     script_parameters = TextAreaField('Script Parameters (JSON)',
-                                     description="Edit parameters if this is a Script product. Must be valid JSON.",
+                                     description="عدّل معلمات السكربت إذا كان هذا المنتج سكربتًا. استخدم JSON غني لتحديد 'label', 'type', 'required', 'default', 'placeholder' لكل متغير. اتركها فارغة إذا لم تكن هناك حاجة لمتغيرات.",
                                      render_kw={"rows": 5})
     submit = SubmitField('Update Product')
 
@@ -98,3 +99,20 @@ class DealForm(FlaskForm):
     stage = SelectField('Deal Stage', choices=DEAL_STAGES, validators=[DataRequired()])
     notes = TextAreaField('Notes', validators=[Optional(), Length(max=5000)])
     submit = SubmitField('Save Deal')
+
+
+class AddScriptForm(FlaskForm):
+    name = StringField('اسم السكربت (للعرض في المتجر)', validators=[DataRequired(), Length(min=3, max=100)])
+    description = TextAreaField('وصف السكربت', validators=[DataRequired()])
+    price = FloatField('سعر المنتج (بالريال السعودي)', validators=[DataRequired(), NumberRange(min=0.0)])
+    script_file = FileField('ملف السكربت (Python .py)', validators=[FileRequired(), FileAllowed(['py'], 'ملفات Python فقط!')])
+    parameters = TextAreaField('معلمات السكربت (بصيغة JSON)', validators=[Optional()], description='أدخل كائن JSON يصف المتغيرات. لكل متغير، يمكنك تحديد: \'label\' (اسم العرض)، \'type\' (مثل \'text\', \'number\', \'date\'), \'required\' (true/false)، \'default\' (قيمة افتراضية)، \'placeholder\' (نص مساعد). مثال: {"api_key": {"label": "مفتاح API", "type": "password", "required": true, "placeholder": "أدخل مفتاح API الخاص بك"}, "count": {"label": "العدد", "type": "number", "default": 10}}')
+    is_active = BooleanField('تفعيل المنتج (جعله ظاهرًا في المتجر)', default=True)
+    submit = SubmitField('إضافة السكربت')
+
+    def validate_parameters(self, parameters):
+        if parameters.data and parameters.data.strip():
+            try:
+                json.loads(parameters.data)
+            except json.JSONDecodeError:
+                raise ValidationError('صيغة JSON لمعلمات السكربت غير صحيحة.')
