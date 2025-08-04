@@ -1,0 +1,724 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة تحكم السوبر أدمن - منصة إتمام{% endblock %}
+
+{% block styles %}
+<style>
+/* تبسيط انتقالات المودال */
+.modal {
+    transition: opacity 0.15s ease-in-out;
+}
+
+/* تحسينات بسيطة للمودال */
+.modal-content {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0">
+                <i class="fas fa-user-shield me-2"></i>
+                لوحة تحكم السوبر أدمن
+            </h2>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- إحصائيات النظام -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">المشرفين</h5>
+                    <h2 class="mb-0">{{ stats.admins_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">المستخدمين</h5>
+                    <h2 class="mb-0">{{ stats.users_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">السكربتات النشطة</h5>
+                    <h2 class="mb-0">{{ stats.active_scripts }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي السكربتات</h5>
+                    <h2 class="mb-0">{{ stats.total_scripts }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إدارة المشرفين -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">إدارة المشرفين</h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+                    <i class="fas fa-plus me-2"></i>إضافة مشرف جديد
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>الاسم الكامل</th>
+                            <th>اسم المستخدم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الصلاحيات</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for admin in admins %}
+                        <tr>
+                            <td>{{ admin.full_name }}</td>
+                            <td>{{ admin.username }}</td>
+                            <td>{{ admin.email }}</td>
+                            <td>
+                                {% for permission in admin.permissions_list %}
+                                    <span class="badge bg-info me-1">{{ permission }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if admin.is_active else 'danger' }}">
+                                    {{ 'مفعل' if admin.is_active else 'معطل' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editAdminModal{{ admin.id }}"
+                                            title="تعديل المشرف">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-info" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#permissionsModal{{ admin.id }}"
+                                            title="تعديل الصلاحيات">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-warning" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#resetPasswordModal{{ admin.id }}"
+                                            title="إعادة تعيين كلمة المرور">
+                                        <i class="fas fa-lock"></i>
+                                    </button>
+                                    <form action="{{ url_for('admin.toggle_admin_status', admin_id=admin.id) }}" method="POST" style="display: inline;">
+                                        {{ csrf_token() }}
+                                        <button type="submit" class="btn btn-sm btn-{{ 'danger' if admin.is_active else 'success' }}"
+                                                onclick="return confirm('هل أنت متأكد من {{ 'تعطيل' if admin.is_active else 'تفعيل' }} هذا المشرف؟')"
+                                                title="{{ 'تعطيل' if admin.is_active else 'تفعيل' }} المشرف">
+                                            <i class="fas fa-{{ 'ban' if admin.is_active else 'check' }}"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- إدارة المستخدمين -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">إدارة المستخدمين</h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-plus me-2"></i>إضافة مستخدم جديد
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>الاسم الكامل</th>
+                            <th>اسم المستخدم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>السكربتات المخصصة</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.full_name }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ user.created_scripts|length }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if user.is_active else 'danger' }}">
+                                    {{ 'مفعل' if user.is_active else 'معطل' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editUserModal{{ user.id }}"
+                                            title="تعديل المستخدم">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-info" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#assignScriptsModal{{ user.id }}"
+                                            title="تخصيص سكربتات">
+                                        <i class="fas fa-code"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-warning" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#resetUserPasswordModal{{ user.id }}"
+                                            title="إعادة تعيين كلمة المرور">
+                                        <i class="fas fa-lock"></i>
+                                    </button>
+                                    <form action="{{ url_for('main.toggle_user_status', user_id=user.id) }}" method="POST" style="display: inline;">
+                                        {{ csrf_token() }}
+                                        <button type="submit" class="btn btn-sm btn-{{ 'danger' if user.is_active else 'success' }}"
+                                                onclick="return confirm('هل أنت متأكد من {{ 'تعطيل' if user.is_active else 'تفعيل' }} هذا المستخدم؟')"
+                                                title="{{ 'تعطيل' if user.is_active else 'تفعيل' }} المستخدم">
+                                            <i class="fas fa-{{ 'ban' if user.is_active else 'check' }}"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- إدارة المنتجات الرقمية -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">إدارة المنتجات الرقمية</h5>
+                <div>
+                    <a href="{{ url_for('main.add_script_route') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-code me-2"></i>إضافة سكربت
+                    </a>
+                    {# Removed Ebook and Database buttons
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addEbookModalPlaceholder">
+                        <i class="fas fa-book me-2"></i>إضافة كتاب رقمي
+                    </button>
+                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addDatabaseModalPlaceholder">
+                        <i class="fas fa-database me-2"></i>إضافة قاعدة بيانات
+                    </button> #}
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>اسم المنتج</th>
+                            <th>النوع</th>
+                            <th>الوصف</th>
+                            <th>السعر</th>
+                            <th>الحالة</th>
+                            <th>تاريخ الإضافة</th>
+                            <th>تفاصيل إضافية</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if all_products %}
+                            {% for product in all_products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>
+                                    {% if product.type == ProductType.SCRIPT %}
+                                        <span class="badge bg-primary">سكربت</span>
+                                    {% elif product.type == ProductType.EBOOK %}
+                                        <span class="badge bg-success">كتاب رقمي</span>
+                                    {% elif product.type == ProductType.DATABASE %}
+                                        <span class="badge bg-info">قاعدة بيانات</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ product.type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ product.description|truncate(100) }}</td>
+                                <td>{{ "%.2f"|format(product.price) }} ر.س</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if product.is_active else 'danger' }}">
+                                        {{ 'مفعل' if product.is_active else 'معطل' }}
+                                    </span>
+                                </td>
+                                <td>{{ product.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if product.type == ProductType.SCRIPT and product.script_definition %}
+                                        <small>مسار الملف: {{ product.script_definition.file_path }}</small><br>
+                                        <small>المعلمات: {{ product.script_definition.parameters|tojson|truncate(50) }}</small>
+                                    {% elif product.type == ProductType.EBOOK and product.ebook_details %}
+                                        <small>المؤلف: {{ product.ebook_details.author }}</small><br>
+                                        <small>الفئة: {{ product.ebook_details.category }}</small>
+                                    {% elif product.type == ProductType.DATABASE and product.database_details %}
+                                        <small>نوع التقنية: {{ product.database_details.db_technology_type }}</small><br>
+                                        <small>الحجم: {{ product.database_details.size }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('main.edit_product', product_id=product.id) }}" class="btn btn-sm btn-primary" title="تعديل المنتج">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% set can_manage_product = False %}
+                                        {% if current_user.is_super_admin %}
+                                            {% set can_manage_product = True %}
+                                        {% elif product.type == ProductType.SCRIPT and current_user.has_permission(Permission.MANAGE_SCRIPTS) %}
+                                            {% set can_manage_product = True %}
+                                        {# Add other conditions for other product types and permissions here #}
+                                        {% endif %}
+
+                                        {% if can_manage_product %}
+                                            {% if product.is_active %}
+                                            <form action="{{ url_for('main.delete_product', product_id=product.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('هل أنت متأكد من أنك تريد تحديد هذا المنتج كـ غير نشط؟ سيتم إخفاؤه من القوائم العامة.');">
+                                                {{ csrf_token() }}
+                                                <button type="submit" class="btn btn-sm btn-danger" title="تحديد المنتج كـ غير نشط">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <button type="button" class="btn btn-sm btn-secondary" title="المنتج غير نشط بالفعل" disabled>
+                                                <i class="fas fa-eye-slash"></i>
+                                            </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center">لا توجد منتجات لعرضها حالياً.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- قسم متابعة التذاكر الفنية -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-ticket-alt me-2"></i>متابعة التذاكر الفنية</h5>
+            <a href="{{ url_for('main.super_admin_list_tickets') }}" class="btn btn-primary">
+                <i class="fas fa-eye me-2"></i>عرض جميع التذاكر
+            </a>
+        </div>
+        <div class="card-body">
+            <p class="mb-0">يمكنك متابعة جميع التذاكر الفنية والرد على استفسارات المستخدمين من هنا.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة مشرف جديد -->
+<div class="modal fade" id="addAdminModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة مشرف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('main.admin_register') }}" method="post">
+                {{ csrf_token() }}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">الاسم الكامل</label>
+                        <input type="text" class="form-control" name="full_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم المستخدم</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم الجوال</label>
+                        <input type="tel" class="form-control" name="phone">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور</label>
+                        <input type="password" class="form-control" name="password" id="addAdminPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">تأكيد كلمة المرور</label>
+                        <input type="password" class="form-control" name="confirm_password" id="addAdminConfirmPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الصلاحيات (سيتم تطبيق الصلاحيات الافتراضية للمشرف عند الإنشاء)</label>
+                        <div class="form-check">
+                            {% for permission in permissions %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ permission }}" id="perm_{{ permission }}">
+                                    <label class="form-check-label" for="perm_{{ permission }}">
+                                        {{ permission }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إضافة المشرف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة مستخدم جديد -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة مستخدم جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('main.add_user_by_superadmin') }}" method="post">
+                {{ csrf_token() }}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">الاسم الكامل</label>
+                        <input type="text" class="form-control" name="full_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم المستخدم</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم الجوال</label>
+                        <input type="tel" class="form-control" name="phone">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="password" id="newUserPassword" required minlength="6">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('newUserPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">تأكيد كلمة المرور</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="confirm_password" id="newUserConfirmPassword" required minlength="6">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('newUserConfirmPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إضافة المستخدم</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- جميع المودالات في نهاية الصفحة -->
+{% for admin in admins %}
+    <!-- مودال تعديل المشرف -->
+    <div class="modal fade" id="editAdminModal{{ admin.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تعديل المشرف {{ admin.full_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('main.superadmin_edit_admin_details', admin_id=admin.id) }}" method="post">
+                    {{ csrf_token() }}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">الاسم الكامل</label>
+                            <input type="text" class="form-control" name="full_name" value="{{ admin.full_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" class="form-control" name="email" value="{{ admin.email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">رقم الجوال</label>
+                            <input type="tel" class="form-control" name="phone" value="{{ admin.phone }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال تعديل الصلاحيات -->
+    <div class="modal fade" id="permissionsModal{{ admin.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تعديل صلاحيات {{ admin.full_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('main.superadmin_edit_admin_permissions', admin_id=admin.id) }}" method="post">
+                    {{ csrf_token() }}
+                    <div class="modal-body">
+                        {% for permission in permissions %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       name="permissions[]" 
+                                       value="{{ permission }}" 
+                                       id="perm_{{ admin.id }}_{{ permission }}"
+                                       {{ 'checked' if permission in admin.permissions_list }}>
+                                <label class="form-check-label" for="perm_{{ admin.id }}_{{ permission }}">
+                                    {{ permission }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">حفظ الصلاحيات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال إعادة تعيين كلمة المرور للمشرف -->
+    <div class="modal fade" id="resetPasswordModal{{ admin.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">إعادة تعيين كلمة المرور - {{ admin.full_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('main.superadmin_reset_admin_password', admin_id=admin.id) }}" method="post">
+                    {{ csrf_token() }}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">كلمة المرور الجديدة</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="adminPassword{{ admin.id }}" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('adminPassword{{ admin.id }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">تغيير كلمة المرور</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+{% for user in users %}
+    <!-- مودال تعديل المستخدم -->
+    <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تعديل المستخدم {{ user.full_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('main.edit_user_by_superadmin', user_id=user.id) }}" method="post">
+                    {{ csrf_token() }}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">الاسم الكامل</label>
+                            <input type="text" class="form-control" name="full_name" value="{{ user.full_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">رقم الجوال</label>
+                            <input type="tel" class="form-control" name="phone" value="{{ user.phone }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال تخصيص السكربتات -->
+    <div class="modal fade" id="assignScriptsModal{{ user.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تخصيص سكربتات - {{ user.full_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('main.assign_scripts_to_user_by_superadmin', user_id=user.id) }}" method="post">
+                    {{ csrf_token() }}
+                    <div class="modal-body">
+                        {% for script in scripts %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       name="scripts[]" 
+                                       value="{{ script.id }}" 
+                                       id="script_{{ user.id }}_{{ script.id }}"
+                                       {% if script in user.scripts %}checked{% endif %}>
+                                <label class="form-check-label" for="script_{{ user.id }}_{{ script.id }}">
+                                    {{ script.name }}
+                                    {% if script in user.scripts %}
+                                        {% set user_script = user.scripts|selectattr("id", "equalto", script.id)|first %}
+                                        <small class="text-muted">
+                                            (تم التخصيص في {{ user_script.assigned_at.strftime('%Y-%m-%d') }})
+                                        </small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">حفظ التخصيص</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال إعادة تعيين كلمة المرور للمستخدم -->
+    <div class="modal fade" id="resetUserPasswordModal{{ user.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">إعادة تعيين كلمة المرور - {{ user.full_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('main.reset_user_password_by_superadmin', user_id=user.id) }}" method="post">
+                    {{ csrf_token() }}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">كلمة المرور الجديدة</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="userPassword{{ user.id }}" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('userPassword{{ user.id }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">تغيير كلمة المرور</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+<!-- مودال إضافة سكربت جديد - This modal is no longer triggered directly for adding scripts.
+     Keeping structure for reference or if other add modals follow this pattern.
+     The "إضافة سكربت" button now links to a separate page. -->
+<div class="modal fade" id="addScriptModalPlaceholder" tabindex="-1">
+    <!-- ... content for a generic add script modal if needed ... -->
+</div>
+
+<!-- Removed addEbookModalPlaceholder -->
+<!-- Removed addDatabaseModal -->
+
+{% block scripts %}
+<script>
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const button = document.activeElement;
+    const icon = button.querySelector('i');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function deleteScript(scriptId) {
+    if (confirm('هل أنت متأكد من حذف هذا السكربت؟')) {
+        window.location.href = `/delete-script/${scriptId}`;
+    }
+}
+
+function deleteEbook(ebookId) {
+    if (confirm('هل أنت متأكد من حذف هذا الكتاب؟')) {
+        window.location.href = `/delete-ebook/${ebookId}`;
+    }
+}
+
+function deleteDatabase(databaseId) {
+    if (confirm('هل أنت متأكد من حذف قاعدة البيانات هذه؟')) {
+        window.location.href = `/delete-database/${databaseId}`;
+    }
+}
+</script>
+{% endblock %}
+{% endblock %} 

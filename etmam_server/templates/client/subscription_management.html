@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}إدارة الاشتراك{% endblock %}
+{% block styles %}
+<style>
+    .plan-card {
+        border-radius: 1.2rem;
+        box-shadow: 0 2px 16px rgba(58,110,216,0.10);
+        border: 2px solid #e0e0e0;
+        transition: box-shadow .2s, border-color .2s;
+        background: #fff;
+        min-width: 260px;
+        margin-bottom: 1.5rem;
+    }
+    .plan-card.current {
+        border: 2.5px solid #3a6ed8;
+        box-shadow: 0 4px 24px #3a6ed822;
+        background: linear-gradient(120deg, #eaf1ff 80%, #f8faff 100%);
+    }
+    .plan-header {
+        border-radius: 1.2rem 1.2rem 0 0;
+        font-weight: bold;
+        font-size: 1.2rem;
+        padding: 1.2rem 0.5rem 0.7rem 0.5rem;
+    }
+    .plan-header.basic { background: linear-gradient(90deg, #43b36a 60%, #2e9d5c 100%); color: #fff; }
+    .plan-header.advanced { background: linear-gradient(90deg, #3a6ed8 60%, #274b8c 100%); color: #fff; }
+    .plan-header.professional { background: linear-gradient(90deg, #f7c873 60%, #f5b041 100%); color: #222; }
+    .plan-price {
+        font-size: 2.1rem;
+        font-weight: bold;
+        color: #3a6ed8;
+        margin-bottom: 0.5rem;
+    }
+    .plan-card.current .plan-price { color: #274b8c; }
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1.2rem 0;
+    }
+    .plan-features li {
+        font-size: 1.01rem;
+        margin-bottom: 0.5rem;
+        color: #274b8c;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+    }
+    .plan-features i { color: #43b36a; }
+    .plan-card.current .plan-features i { color: #3a6ed8; }
+    .plan-action .btn {
+        font-size: 1.08rem;
+        border-radius: 0.7rem;
+        padding: 0.7rem 0;
+    }
+    @media (max-width: 900px) {
+        .plan-card { min-width: 100%; margin-bottom: 1.5rem; }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center g-4">
+        {% set plans = [
+            {
+                'key': 'basic',
+                'name': 'الأساسية',
+                'price': 49,
+                'header_class': 'basic',
+                'features': [
+                    'إدارة العروض العقارية',
+                    'إدارة الصفقات والعملاء',
+                    'وصول محدود للأدوات التسويقية',
+                    'دعم فني عبر التذاكر'
+                ]
+            },
+            {
+                'key': 'advanced',
+                'name': 'المتقدمة',
+                'price': 99,
+                'header_class': 'advanced',
+                'features': [
+                    'كل مزايا الباقة الأساسية',
+                    'وصول موسع للأدوات التسويقية',
+                    'تقارير دورية',
+                    'دعم فني أسرع'
+                ]
+            },
+            {
+                'key': 'professional',
+                'name': 'الاحترافية',
+                'price': 199,
+                'header_class': 'professional',
+                'features': [
+                    'كل مزايا الباقة المتقدمة',
+                    'وصول كامل للسكربتات والكتب',
+                    'قواعد بيانات حصرية',
+                    'دعم فني ذو أولوية'
+                ]
+            }
+        ] %}
+        {% for p in plans %}
+        <div class="col-12 col-md-6 col-lg-4 d-flex align-items-stretch">
+            <div class="plan-card {% if plan == p.key %}current{% endif %} w-100">
+                <div class="plan-header {{ p.header_class }} text-center">{{ p.name }}</div>
+                <div class="text-center plan-price">{{ p.price }}<span style="font-size:1.1rem; color:#888;"> ر.س / شهر</span></div>
+                <ul class="plan-features px-4">
+                    {% for feature in p.features %}
+                    <li><i class="fas fa-check-circle me-2"></i>{{ feature }}</li>
+                    {% endfor %}
+                </ul>
+                <div class="plan-action text-center pb-4 px-4">
+                    {% if plan == p.key %}
+                        <button class="btn btn-secondary w-100" disabled>الباقة الحالية</button>
+                    {% else %}
+                        <form method="POST" action="#">
+                            <button class="btn btn-primary w-100" type="submit">ترقية إلى {{ p.name }}</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

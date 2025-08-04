@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}الرئيسية - منصة إتمام{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="display-5 fw-bold mb-4">
+                ساحة للوسيط والمسوق العقاري<br>تساعده على إنجاز وإتمام صفقاته<br>و تنظيم عروضه بشكل احترافي وسلس
+            </h1>
+            <img src="{{ url_for('static', filename='images/hero.svg') }}" alt="Etmam Platform" class="img-fluid my-4" style="max-width: 400px;">
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 gap-3">ابدأ تجربتك الآن</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container px-4 py-5" id="featured-3">
+    <h2 class="pb-2 border-bottom text-center">لماذا تختار إتمام؟</h2>
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
+        <div class="feature col text-center">
+            <div class="feature-icon bg-primary bg-gradient text-white fs-2 mb-3 mx-auto" style="width: 4rem; height: 4rem; border-radius: .75rem; display: grid; place-items: center;">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <h2>إدارة متكاملة</h2>
+            <p>نظام موحد لإدارة العروض، الصفقات، والعملاء بكل سهولة.</p>
+        </div>
+        <div class="feature col text-center">
+            <div class="feature-icon bg-primary bg-gradient text-white fs-2 mb-3 mx-auto" style="width: 4rem; height: 4rem; border-radius: .75rem; display: grid; place-items: center;">
+                <i class="fas fa-tools"></i>
+            </div>
+            <h2>أدوات تسويقية</h2>
+            <p>وصول حصري لسكربتات وكتب وقواعد بيانات لتعزيز تسويقك.</p>
+        </div>
+        <div class="feature col text-center">
+            <div class="feature-icon bg-primary bg-gradient text-white fs-2 mb-3 mx-auto" style="width: 4rem; height: 4rem; border-radius: .75rem; display: grid; place-items: center;">
+                <i class="fas fa-headset"></i>
+            </div>
+            <h2>دعم فني متميز</h2>
+            <p>نظام تذاكر احترافي وفريق جاهز لمساعدتك في أي وقت.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% import 'components/alerts.html' as alerts %}
+{% block title %}إضافة عميل جديد{% endblock %}
+{% block styles %}
+<style>
+    .add-client-container {
+        max-width: 430px;
+        margin: 0 auto;
+    }
+    .card.add-client-card {
+        border-radius: 1rem;
+        box-shadow: 0 2px 16px rgba(58,110,216,0.08);
+    }
+    .card-header.bg-primary {
+        border-radius: 1rem 1rem 0 0;
+        background: linear-gradient(90deg, #3a6ed8 60%, #274b8c 100%);
+    }
+    .form-label {
+        font-weight: 500;
+        color: #274b8c;
+    }
+    .form-control:focus {
+        border-color: #3a6ed8;
+        box-shadow: 0 0 0 0.15rem #3a6ed833;
+    }
+    .csv-upload-box {
+        background: #f8f9fa;
+        border: 1.5px dashed #3a6ed8;
+        border-radius: 0.7rem;
+        padding: 1.2rem 1rem;
+        margin-bottom: 1.2rem;
+        text-align: center;
+    }
+    .csv-upload-box label {
+        color: #3a6ed8;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .csv-upload-box input[type="file"] {
+        display: none;
+    }
+    .csv-upload-box i {
+        font-size: 1.5rem;
+        color: #3a6ed8;
+        margin-bottom: 0.3rem;
+    }
+</style>
+{% endblock %}
+{% block content %}
+{{ alerts.show_alerts() }}
+<div class="container py-4 add-client-container">
+    <div class="csv-upload-box mb-3">
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('client.add_client') }}">
+            <input type="hidden" name="csv_upload" value="1">
+            <label for="csv_file"><i class="fas fa-file-csv"></i><br>رفع ملف عملاء (CSV)</label>
+            <input type="file" id="csv_file" name="csv_file" accept=".csv" onchange="this.form.submit()">
+        </form>
+        <div class="small text-muted mt-2">يمكنك رفع ملف بصيغة CSV لإضافة عدة عملاء دفعة واحدة.<br>يجب أن يحتوي الملف على الأعمدة: الاسم، المدينة، الحي، الجوال، البريد، ملاحظات</div>
+    </div>
+    <div class="card shadow-sm add-client-card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>إضافة عميل جديد</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.full_name.label(class="form-label") }}
+                    {{ form.full_name(class="form-control", placeholder="مثال: محمد أحمد") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.city.label(class="form-label") }}
+                    {{ form.city(class="form-control", placeholder="مثال: الرياض") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.district.label(class="form-label") }}
+                    {{ form.district(class="form-control", placeholder="مثال: حي النرجس") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.phone.label(class="form-label") }}
+                    {{ form.phone(class="form-control", placeholder="05xxxxxxxx") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", placeholder="example@email.com") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.notes.label(class="form-label") }}
+                    {{ form.notes(class="form-control", placeholder="ملاحظات إضافية (اختياري)") }}
+                </div>
+                <button type="submit" class="btn btn-success w-100 mb-2"><i class="fas fa-save me-1"></i>حفظ العميل</button>
+                <a href="{{ url_for('client.list_clients') }}" class="btn btn-secondary w-100"><i class="fas fa-arrow-right me-1"></i>إلغاء</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

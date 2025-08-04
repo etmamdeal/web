@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الصفقات{% endblock %}
+
+{% block styles %}
+<style>
+    .deal-card {
+        border: none;
+        border-radius: 1.2rem;
+        box-shadow: 0 4px 24px rgba(58,110,216,0.10);
+        margin-bottom: 2rem;
+        background: linear-gradient(120deg, #f8faff 80%, #eaf1ff 100%);
+        transition: box-shadow .2s, border-color .2s, transform .2s;
+        position: relative;
+        overflow: hidden;
+    }
+    .deal-card.completed {
+        background: linear-gradient(120deg, #e8f9f0 80%, #d2f4e3 100%);
+        border: 2px solid #43b36a;
+        box-shadow: 0 4px 24px #43b36a22;
+    }
+    .deal-card.unfinished {
+        background: linear-gradient(120deg, #fff0f0 80%, #ffeaea 100%);
+        border: 2px solid #e74c3c;
+        box-shadow: 0 4px 24px #e74c3c22;
+    }
+    .deal-status-badge {
+        position: absolute;
+        top: 1.2rem;
+        left: 1.2rem;
+        padding: 0.45em 1.2em;
+        border-radius: 1.5em;
+        font-size: 1.05em;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .deal-status-badge.completed {
+        background: linear-gradient(90deg, #43b36a 60%, #2e9d5c 100%);
+    }
+    .deal-status-badge.unfinished {
+        background: linear-gradient(90deg, #e74c3c 60%, #c0392b 100%);
+    }
+    .deal-status-badge.pending {
+        background: linear-gradient(90deg, #f7c873 60%, #f5b041 100%);
+        color: #333;
+    }
+    .deal-card .card-title {
+        color: #3a6ed8;
+        font-size: 1.18rem;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+    .deal-card .card-subtitle {
+        color: #274b8c;
+        font-size: 1.01rem;
+        margin-bottom: 0.7rem;
+    }
+    .deal-card .deal-info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 8px 0;
+    }
+    .deal-card .deal-info-list li {
+        font-size: 1.01rem;
+        margin-bottom: 4px;
+        color: #274b8c;
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+    }
+    .deal-card .deal-info-list li strong {
+        color: #222;
+        min-width: 60px;
+        display: inline-block;
+    }
+    .deal-card .deal-info-list i {
+        color: #3a6ed8;
+        font-size: 1.1em;
+        margin-left: 0.2em;
+    }
+    .deal-card .deal-info-list .badge {
+        font-size: 1em;
+        padding: 0.35em 0.9em;
+        border-radius: 1em;
+        font-weight: 600;
+        background: linear-gradient(90deg, #eaf1ff 60%, #c7e0ff 100%);
+        color: #1a237e;
+        box-shadow: 0 1px 4px #3a6ed81a;
+    }
+    .deal-card .deal-info-list .badge.completed {
+        background: linear-gradient(90deg, #43b36a 60%, #2e9d5c 100%);
+        color: #fff;
+    }
+    .deal-card .deal-info-list .badge.unfinished {
+        background: linear-gradient(90deg, #e74c3c 60%, #c0392b 100%);
+        color: #fff;
+    }
+    .deal-card .deal-info-list .badge.pending {
+        background: linear-gradient(90deg, #f7c873 60%, #f5b041 100%);
+        color: #333;
+    }
+    .deal-actions .btn {
+        margin: 0 0.18rem;
+        min-width: 38px;
+        font-size: 1.1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 4px #3a6ed81a;
+        transition: transform .1s;
+    }
+    .deal-actions .btn:hover {
+        transform: scale(1.08);
+    }
+    .deal-actions {
+        gap: 0.5rem;
+    }
+    .filter-bar {
+        background: #f8f9fa;
+        border-radius: 0.75rem;
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.7rem;
+    }
+    .filter-bar input, .filter-bar select {
+        border-radius: 0.5rem;
+        border: 1.5px solid #3a6ed8;
+        font-size: 1.01rem;
+    }
+    .filter-bar button {
+        border-radius: 0.5rem;
+        font-size: 1.01rem;
+    }
+    @media (max-width: 900px) {
+        .deal-card { margin-bottom: 1.2rem; }
+        .deal-card .card-title { font-size: 1.05rem; }
+    }
+    @media (max-width: 600px) {
+        .deal-card { padding: 0.5rem; }
+        .deal-card .deal-info-list li { font-size: 0.93rem; }
+        .deal-actions .btn { font-size: 1rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <h2 class="mb-0"><i class="fas fa-handshake me-2"></i>إدارة الصفقات</h2>
+        <a href="{{ url_for('client.add_deal') }}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>إضافة صفقة جديدة</a>
+    </div>
+    <div class="filter-bar d-flex flex-wrap align-items-center mb-4">
+        <form class="d-flex flex-wrap align-items-center w-100" method="get" action="{{ url_for('client.deal_pipeline') }}">
+            <input type="text" name="q" value="{{ request.args.get('q', '') }}" class="form-control me-2 mb-2 mb-md-0" placeholder="بحث سريع... (العقار، العميل، المرحلة)">
+            <select name="status" class="form-select me-2 mb-2 mb-md-0" style="max-width: 180px;">
+                <option value="" {% if not request.args.get('status') %}selected{% endif %}>كل الحالات</option>
+                <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>منجزة</option>
+                <option value="unfinished" {% if request.args.get('status') == 'unfinished' %}selected{% endif %}>غير منجزة</option>
+                <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>معلقة</option>
+            </select>
+            <button class="btn btn-outline-secondary" type="submit">تصفية</button>
+        </form>
+    </div>
+    <div class="row">
+        {% for deal in deals %}
+        {% set is_completed = deal.event_closed and deal.stage == 'Closed - Won' %}
+        {% set is_unfinished = not deal.event_closed or deal.stage == 'Closed - Lost' %}
+        {% set badge_class = 'pending' %}
+        {% if is_completed %}{% set badge_class = 'completed' %}{% elif is_unfinished %}{% set badge_class = 'unfinished' %}{% endif %}
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="card deal-card {{ badge_class }} h-100">
+                <div class="d-flex align-items-center justify-content-between px-3 pt-3">
+                    <span class="deal-status-badge {{ badge_class }}" style="position:static; box-shadow:none; font-size:1.05em;">
+                        {% if is_completed %}
+                            <i class="fas fa-check-circle" style="color:#43b36a;"></i> <span style="color:#43b36a; font-weight:600;">منجزة</span>
+                        {% elif is_unfinished %}
+                            <i class="fas fa-times-circle" style="color:#e74c3c;"></i> <span style="color:#e74c3c; font-weight:600;">غير منجزة</span>
+                        {% else %}
+                            <i class="fas fa-clock" style="color:#f7c873;"></i> <span style="color:#f7c873; font-weight:600;">معلقة</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body d-flex flex-column pt-1">
+                    <div>
+                        <h5 class="card-title"><i class="fas fa-home me-1"></i> {{ deal.property.title if deal.property else 'بدون عنوان' }}</h5>
+                        <h6 class="card-subtitle mb-3 text-muted"><i class="fas fa-user me-1"></i> {{ deal.client.full_name if deal.client else deal.client_name }}</h6>
+                        <ul class="deal-info-list list-unstyled">
+                            <li><i class="fas fa-flag"></i> <strong>المرحلة:</strong> <span class="badge {{ badge_class }}" style="font-size:0.95em; padding:0.3em 0.7em;">{{ deal.stage }}</span></li>
+                            <li><i class="fas fa-money-bill-wave"></i> <strong>السعر:</strong> {{ "%.2f"|format(deal.actual_price) if deal.actual_price else '-' }} ر.س</li>
+                            <li><i class="fas fa-percentage"></i> <strong>العمولة:</strong> {% if deal.commission_rate %}{{ deal.commission_rate }}%{% else %}-{% endif %}</li>
+                            <li><i class="fas fa-coins"></i> <strong>قيمة العمولة:</strong> {{ "%.2f"|format(deal.commission_value) if deal.commission_value else '-' }} ر.س</li>
+                            <li><i class="fas fa-calendar-alt"></i> <strong>الإنشاء:</strong> {{ deal.created_at.strftime('%Y-%m-%d') if deal.created_at else '-' }}</li>
+                        </ul>
+                    </div>
+                    {# شريط التقدم #}
+                    {% set stage_order = [
+                        'New Lead',
+                        'Showing Scheduled',
+                        'Negotiation',
+                        'Contract Signing',
+                        'Pending - Finance/Inspection',
+                        'Closed - Won',
+                        'Closed - Lost',
+                        'On Hold'
+                    ] %}
+                    {% set stage_idx = stage_order.index(deal.stage) if deal.stage in stage_order else 0 %}
+                    {% set progress = ((stage_idx + 1) / stage_order|length * 100) | round(0, 'floor') %}
+                    <div class="progress my-2" style="height: 18px; background: #eaf1ff; border-radius: 1em;">
+                        <div class="progress-bar bg-{{ 'success' if is_completed else 'danger' if is_unfinished else 'warning' }}" role="progressbar" style="width: {{ progress }}%; font-weight:600; font-size:0.98em; border-radius: 1em; transition: width 0.5s;"
+                            aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ deal.stage }} ({{ progress }}%)
+                        </div>
+                    </div>
+                    <div class="deal-actions mt-auto d-flex justify-content-end gap-2 border-top pt-2">
+                        <a href="{{ url_for('client.view_deal', deal_id=deal.id) }}" class="btn btn-xs btn-outline-info px-2 py-1" title="عرض التفاصيل" style="font-size:0.95em; min-width:28px;"><i class="fas fa-eye"></i></a>
+                        <a href="{{ url_for('client.edit_deal', deal_id=deal.id) }}" class="btn btn-xs btn-outline-primary px-2 py-1" title="تعديل الصفقة" style="font-size:0.95em; min-width:28px;"><i class="fas fa-edit"></i></a>
+                        <form action="{{ url_for('client.delete_deal', deal_id=deal.id) }}" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف الصفقة؟');" style="display:inline;">
+                            <button type="submit" class="btn btn-xs btn-outline-danger px-2 py-1" title="حذف الصفقة" style="font-size:0.95em; min-width:28px;"><i class="fas fa-trash"></i></button>
+                        </form>
+                        <form action="{{ url_for('client.archive_deal', deal_id=deal.id) }}" method="POST" class="d-inline" onsubmit="return confirm('هل تريد أرشفة الصفقة؟');" style="display:inline;">
+                            <button type="submit" class="btn btn-xs btn-outline-secondary px-2 py-1" title="أرشفة الصفقة" style="font-size:0.95em; min-width:28px;"><i class="fas fa-archive"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not deals %}
+    <div class="alert alert-info text-center mt-4"><i class="fas fa-info-circle me-2"></i>لا توجد صفقات بعد. يمكنك إضافة أول صفقة من الزر بالأعلى.</div>
+    {% endif %}
+</div>
+{% endblock %}

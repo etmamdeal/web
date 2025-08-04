@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل الدخول - منصة إتمام{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>تسجيل الدخول</h1>
+    </div>
+</div>
+
+<div class="container content-section">
+    <div class="form-container">
+        <h2>مرحباً بعودتك!</h2>
+        <form method="POST" action="{{ url_for('auth.client_login') }}">
+            {{ csrf_token() }}
+            <div class="form-group">
+                <label for="email">البريد الإلكتروني</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="password">كلمة المرور</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">تسجيل الدخول</button>
+            </div>
+        </form>
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <p>ليس لديك حساب؟ <a href="{{ url_for('auth.register') }}">أنشئ حساباً جديداً</a></p>
+            {# I'll assume a password reset request page exists or will be created. For now, this is a placeholder link. #}
+            {# <p><a href="{{ url_for('main.reset_password_request') }}">نسيت كلمة المرور؟</a></p> #}
+        </div>
+    </div>
+</div>
+{% endblock %}

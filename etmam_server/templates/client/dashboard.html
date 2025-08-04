@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم العميل - منصة إتمام</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+      background-color: #f9f5dd;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.7rem 2.5rem 0.7rem 2.5rem;
+      background-color: #3a6ed8;
+      color: white;
+      min-height: 62px;
+      box-shadow: 0 2px 8px rgba(39,75,140,0.07);
+      border-bottom: 3px solid #60cfa4;
+    }
+    header .nav-icons a {
+      margin-left: 1.2rem;
+      color: white;
+      text-decoration: none;
+      font-size: 1.08rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    header .nav-icons a:hover {
+      color: #f7c873;
+    }
+    .layout {
+      display: flex;
+      flex-direction: row;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(135deg, #3a6ed8 85%, #274b8c 100%);
+      height: calc(100vh - 62px);
+      padding: 2.2rem 1rem 1.5rem 1rem;
+      box-shadow: 2px 0 12px rgba(39,75,140,0.08);
+      border-top-left-radius: 24px;
+      border-bottom-left-radius: 24px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      transition: background 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      min-width: 220px;
+    }
+    .sidebar h2 {
+      text-align: center;
+      color: #f7c873;
+      margin-bottom: 2.2rem;
+      letter-spacing: 1px;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      background-color: rgba(255,255,255,0.07);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.85rem 1.2rem;
+      margin-bottom: 1.1rem;
+      border-radius: 10px;
+      font-size: 1.08rem;
+      font-weight: 500;
+      box-shadow: 0 1px 4px rgba(39,75,140,0.07);
+      transition: background 0.2s, transform 0.2s, color 0.2s;
+      position: relative;
+      border-right: 4px solid transparent;
+    }
+    .sidebar a i {
+      margin-left: 12px;
+      font-size: 1.1rem;
+    }
+    .sidebar a:hover {
+      background-color: #274b8c;
+      color: #f7c873;
+      transform: translateX(-4px) scale(1.03);
+      border-right: 4px solid #60cfa4;
+    }
+    .content {
+      flex: 1;
+      padding: 2.5rem 2rem 2rem 2rem;
+      min-height: calc(100vh - 62px - 60px);
+      display: flex;
+      flex-direction: column;
+    }
+    .welcome {
+      background-color: #fff;
+      padding: 1.5rem 2.5rem;
+      border-radius: 16px;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 2px 8px rgba(39,75,140,0.07);
+      text-align: center;
+      font-size: 1.15rem;
+      border-right: 6px solid #60cfa4;
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+    }
+    .stat-box {
+      background-color: #fff;
+      padding: 1.2rem 0.5rem;
+      width: 220px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(39,75,140,0.07);
+      transition: box-shadow 0.2s, transform 0.2s;
+      border-top: 3px solid #3a6ed8;
+      border-bottom: 3px solid #f7c873;
+      color: #274b8c;
+      font-weight: 600;
+    }
+    .stat-box:hover {
+      box-shadow: 0 4px 16px rgba(39,75,140,0.13);
+      transform: translateY(-3px) scale(1.03);
+      color: #60cfa4;
+    }
+    footer {
+      text-align: center;
+      padding: 1.1rem 0 1.1rem 0;
+      background-color: #274b8c;
+      color: #fff;
+      font-size: 1.08rem;
+      margin-top: auto;
+      border-radius: 0 0 16px 16px;
+      box-shadow: 0 -2px 8px rgba(39,75,140,0.07);
+      min-height: 60px;
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+    }
+    @media (max-width: 900px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        border-radius: 0 0 24px 24px;
+        min-width: unset;
+        padding: 1.2rem 0.5rem 1rem 0.5rem;
+      }
+      .sidebar a {
+        flex: 1 1 40%;
+        text-align: center;
+        margin: 0.5rem;
+      }
+      .layout {
+        flex-direction: column;
+      }
+      .content {
+        padding: 1.2rem 0.5rem 1rem 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div><strong>منصة إتمام</strong></div>
+    <div class="nav-icons">
+      <a href="/">الرئيسية <i class="fas fa-home"></i></a>
+      <a href="/logout">تسجيل الخروج <i class="fas fa-sign-out-alt"></i></a>
+      <a href="/profile">الملف الشخصي <i class="fas fa-user"></i></a>
+    </div>
+  </header>
+  <div class="layout">
+    <div class="sidebar">
+      <h2>القائمة</h2>
+      <a href="{{ url_for('client.property_map') }}"><i class="fas fa-plus"></i>إضافة عقار</a>
+      <a href="{{ url_for('client.add_client') }}"><i class="fas fa-user-plus"></i>إضافة عميل</a>
+      <a href="{{ url_for('client.manage_properties') }}"><i class="fas fa-building"></i>إدارة العقارات</a>
+      <a href="{{ url_for('client.deal_pipeline') }}"><i class="fas fa-handshake"></i>إدارة الصفقات</a>
+      <a href="{{ url_for('client.offers') }}"><i class="fas fa-tags"></i>إدارة العروض</a>
+      <a href="{{ url_for('client.list_clients') }}"><i class="fas fa-users"></i>إدارة العملاء</a>
+      <a href="{{ url_for('client.marketing_tools') }}"><i class="fas fa-bullhorn"></i>أدوات التسويق</a>
+      <a href="{{ url_for('client.subscription_management') }}"><i class="fas fa-gem"></i>إدارة الاشتراك</a>
+      <a href="{{ url_for('client.profile') }}"><i class="fas fa-user"></i>الملف الشخصي</a>
+    </div>
+    <div class="content">
+      <div class="welcome">
+        <h3>مرحباً بك، nezar alghorebi 👋</h3>
+        <p>نتمنى لك يوماً مليئاً بالإنجازات!</p>
+      </div>
+      <div class="stats">
+        <div class="stat-box">
+          <h4>إجمالي العقارات</h4>
+          <p>{{ total_properties }}</p>
+        </div>
+        <div class="stat-box">
+          <h4>الصفقات قيد التنفيذ</h4>
+          <p>{{ unfinished_deals }}</p>
+        </div>
+        <div class="stat-box">
+          <h4>الصفقات المكتملة</h4>
+          <p>{{ completed_deals }}</p>
+        </div>
+        <div class="stat-box">
+          <h4>تقدير الإيرادات</h4>
+          <p>{{ '%.2f'|format(total_revenue) }} ر.س</p>
+        </div>
+      </div>
+      <footer>
+        جميع الحقوق محفوظة © 2025 منصة إتمام
+      </footer>
+    </div>
+  </div>
+</body>
+</html>

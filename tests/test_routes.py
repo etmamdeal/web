@@ -10,10 +10,14 @@
 """
 
 import unittest
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flask import url_for
 # Import create_app and db from run.py, or the relevant app factory pattern
-from run import app, db # Assuming run.py creates the app and db is initialized
-from models import User, Script, RunLog, Role, Permission, Product, ProductType, Ticket, TicketMessage # Added Ticket, TicketMessage
+from run import app
+from etmam_server.extensions import db # Assuming run.py creates the app and db is initialized
+from etmam_server.models import User, Script, RunLog, Role, Permission, Product, ProductType, Ticket, TicketMessage, Property, Deal # Added Property, Deal
 from werkzeug.security import generate_password_hash
 import json
 import io # Added io for file upload testing
@@ -131,8 +135,8 @@ class TestRoutes(unittest.TestCase):
         response = self.client.get(admin_dashboard_url)
         self.assertEqual(response.status_code, 302)
         with app.test_request_context(): # To allow url_for without active request
-            client_dashboard_url = url_for('main.client_dashboard')
-            homepage_url = url_for('main.homepage')
+            client_dashboard_url = url_for('client.dashboard')
+            homepage_url = url_for('public.homepage')
         self.assertTrue(response.location.endswith(client_dashboard_url) or response.location.endswith(homepage_url))
         
         # تسجيل دخول كمشرف
@@ -205,7 +209,7 @@ class TestRoutes(unittest.TestCase):
             'subject': 'Test Ticket Subject',
             'description': 'This is a test ticket description.'
         }
-        response = self.client.post(url_for('main.client_new_ticket'), data=ticket_data, follow_redirects=True)
+        response = self.client.post(url_for('client.new_ticket'), data=ticket_data, follow_redirects=True)
         self.assertEqual(response.status_code, 200) # Should redirect to list_tickets
         self.assertIn('تم إنشاء تذكرة الدعم بنجاح!', response.data.decode())
 
@@ -232,7 +236,7 @@ class TestRoutes(unittest.TestCase):
         admin_ticket = Ticket(user_id=self.test_admin.id, ticket_type='technical', subject='Admin Ticket', description='Desc2')
         db.session.add(admin_ticket)
         db.session.commit()
-        response_after_admin_ticket = self.client.get(url_for('main.client_list_tickets'))
+                response_after_admin_ticket = self.client.get(url_for('client.list_tickets'))
         self.assertNotIn('Admin Ticket', response_after_admin_ticket.data.decode())
 
     def test_client_can_view_own_ticket_and_add_message(self):
@@ -274,7 +278,7 @@ class TestRoutes(unittest.TestCase):
         db.session.commit()
 
         self.login(self.test_user.username, 'test123')
-        response = self.client.get(url_for('main.client_view_ticket', ticket_id=other_ticket.id))
+                response = self.client.get(url_for('client.view_ticket', ticket_id=other_ticket.id))
         self.assertEqual(response.status_code, 403) # Forbidden
 
     def test_admin_can_list_all_tickets(self):
@@ -341,6 +345,66 @@ class TestRoutes(unittest.TestCase):
         response = self.client.get(url_for('main.admin_dashboard'), follow_redirects=True)
         self.assertEqual(response.status_code, 200) # After redirect
         self.assertIn('غير مصرح لك بالدخول هنا.', response.data.decode()) # Check flashed message
+
+    def test_client_offers_page(self):
+        """اختبار صفحة العروض وظهور العروض الخاصة بالمستخدم فقط"""
+        self.login('test_user', 'test123', '/client-login')
+        # إضافة عقار (عرض)
+        prop = Property(title='شقة اختبار', user_id=self.test_user.id, type='Residential', price=100000, area=120, rooms=3)
+        db.session.add(prop)
+        db.session.commit()
+        response = self.client.get('/offers')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('شقة اختبار', response.data.decode())
+        # التأكد من أن العقارات لمستخدم آخر لا تظهر
+        other_prop = Property(title='شقة أخرى', user_id=self.test_admin.id, type='Residential', price=200000, area=150, rooms=4)
+        db.session.add(other_prop)
+        db.session.commit()
+        response = self.client.get('/offers')
+        self.assertNotIn('شقة أخرى', response.data.decode())
+
+    def test_add_and_delete_offer(self):
+        """اختبار إضافة وحذف عرض (عقار)"""
+        self.login('test_user', 'test123', '/client-login')
+        from models import Property
+        # إضافة عقار جديد
+        prop = Property(title='فيلا جديدة', user_id=self.test_user.id, type='Residential', price=500000, area=300, rooms=6)
+        db.session.add(prop)
+        db.session.commit()
+        response = self.client.get('/offers')
+        self.assertIn('فيلا جديدة', response.data.decode())
+        # حذف العقار
+        db.session.delete(prop)
+        db.session.commit()
+        response = self.client.get('/offers')
+        self.assertNotIn('فيلا جديدة', response.data.decode())
+
+    def test_dashboard_statistics(self):
+        """اختبار ظهور الإحصائيات الصحيحة في لوحة تحكم العميل"""
+        self.login('test_user', 'test123', '/client-login')
+        from models import Property, Deal
+        # إضافة عقار وصفقة منجزة
+        prop = Property(title='عقار إحصائي', user_id=self.test_user.id, type='Residential', price=200000, area=150, rooms=4)
+        db.session.add(prop)
+        db.session.commit()
+        deal = Deal(property_id=prop.id, user_id=self.test_user.id, client_id=None, client_name='عميل إحصائي', stage='Closed - Won', actual_price=200000, commission_value=5000, event_closed=True)
+        db.session.add(deal)
+        db.session.commit()
+        response = self.client.get('/dashboard')
+        html = response.data.decode()
+        self.assertIn('إجمالي العقارات', html)
+        self.assertIn('الصفقات المكتملة', html)
+        self.assertIn('تقدير الإيرادات', html)
+        self.assertIn('200000', html) # السعر
+        self.assertIn('5000', html)   # الإيراد
+        # حذف العقار والصفقة والتأكد من تحديث الإحصائيات
+        db.session.delete(deal)
+        db.session.delete(prop)
+        db.session.commit()
+        response = self.client.get('/dashboard')
+        html = response.data.decode()
+        self.assertNotIn('200000', html)
+        self.assertNotIn('5000', html)
 
 if __name__ == '__main__':
     unittest.main() 

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}إدارة العملاء{% endblock %}
+{% block styles %}
+<style>
+    .clients-table-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .clients-table {
+        width: 100%;
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 2px 16px rgba(58,110,216,0.08);
+        overflow: hidden;
+    }
+    .clients-table th, .clients-table td {
+        text-align: center;
+        vertical-align: middle;
+        padding: 0.85rem 0.5rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .clients-table th {
+        background: #f8f9fa;
+        color: #3a6ed8;
+        font-weight: bold;
+        font-size: 1.08rem;
+    }
+    .clients-table td {
+        font-size: 1.01rem;
+        color: #222;
+    }
+    .clients-table .actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.3rem;
+    }
+    .csv-upload-box {
+        background: #f8f9fa;
+        border: 1.5px dashed #3a6ed8;
+        border-radius: 0.7rem;
+        padding: 1.2rem 1rem;
+        margin-bottom: 1.2rem;
+        text-align: center;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .csv-upload-box label {
+        color: #3a6ed8;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .csv-upload-box input[type="file"] {
+        display: none;
+    }
+    .csv-upload-box i {
+        font-size: 1.5rem;
+        color: #3a6ed8;
+        margin-bottom: 0.3rem;
+    }
+    @media (max-width: 700px) {
+        .clients-table-container { max-width: 100%; }
+        .clients-table th, .clients-table td { font-size: 0.93rem; padding: 0.5rem 0.2rem; }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4 clients-table-container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="mb-0"><i class="fas fa-users me-2"></i>إدارة العملاء</h2>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('client.add_client') }}" class="btn btn-success">
+                <i class="fas fa-user-plus me-2"></i>إضافة عميل جديد
+            </a>
+        </div>
+    </div>
+    <div class="csv-upload-box mb-3">
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('client.list_clients') }}">
+            <input type="hidden" name="csv_upload" value="1">
+            <label for="csv_file"><i class="fas fa-file-csv"></i><br>رفع ملف عملاء (CSV)</label>
+            <input type="file" id="csv_file" name="csv_file" accept=".csv" onchange="this.form.submit()">
+        </form>
+        <div class="small text-muted mt-2">يمكنك رفع ملف بصيغة CSV لإضافة عدة عملاء دفعة واحدة.<br>يجب أن يحتوي الملف على الأعمدة: full_name, city, district, phone, email, notes</div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% if clients %}
+    <div class="table-responsive">
+    <table class="clients-table">
+        <thead>
+            <tr>
+                <th>الاسم</th>
+                <th>المدينة</th>
+                <th>الحي</th>
+                <th>الجوال</th>
+                <th>البريد</th>
+                <th>ملاحظات</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in clients %}
+            <tr>
+                <td>{{ client.full_name }}</td>
+                <td>{{ client.city }}</td>
+                <td>{{ client.district }}</td>
+                <td>{{ client.phone }}</td>
+                <td>{% if client.email %}{{ client.email }}{% else %}-{% endif %}</td>
+                <td>
+                    {% if client.notes and client.notes|length < 120 and (client.notes|regex_search('^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\u0020-\u007E]+$')) %}
+                        <span class="small text-muted fst-italic">{{ client.notes|truncate(80) }}</span>
+                    {% else %}-{% endif %}
+                </td>
+                <td class="actions">
+                    <a href="{{ url_for('client.edit_client', client_id=client.id) }}" class="btn btn-sm btn-outline-primary" title="تعديل العميل"><i class="fas fa-edit"></i></a>
+                    <form action="{{ url_for('client.delete_client', client_id=client.id) }}" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد أنك تريد حذف هذا العميل؟ لا يمكن التراجع عن هذا الإجراء.');">
+                        {{ csrf_token() }}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف العميل"><i class="fas fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">لا يوجد عملاء بعد. يمكنك إضافة أول عميل من الزر بالأعلى.</div>
+    {% endif %}
+</div>
+{% endblock %} 

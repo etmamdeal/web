@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% import 'components/alerts.html' as alerts %}
+
+{% block title %}إضافة صفقة جديدة{% endblock %}
+
+{% block styles %}
+<style>
+    .form-section {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.075);
+    }
+    .form-section h4 {
+        margin-bottom: 1.5rem;
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: .75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ alerts.show_alerts() }}
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-plus me-2"></i>إضافة صفقة جديدة</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.property_id.label(class="form-label") }}
+                            {{ form.property_id(class="form-select" + (" is-invalid" if form.property_id.errors else "")) }}
+                            {% for error in form.property_id.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.client_id.label(class="form-label") }}
+                            {{ form.client_id(class="form-select" + (" is-invalid" if form.client_id.errors else "")) }}
+                            {% for error in form.client_id.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.listed_price.label(class="form-label") }}
+                            {{ form.listed_price(class="form-control" + (" is-invalid" if form.listed_price.errors else "")) }}
+                            {% for error in form.listed_price.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.suggested_price.label(class="form-label") }}
+                            {{ form.suggested_price(class="form-control" + (" is-invalid" if form.suggested_price.errors else "")) }}
+                            {% for error in form.suggested_price.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            {{ form.actual_price.label(class="form-label") }}
+                            {{ form.actual_price(class="form-control" + (" is-invalid" if form.actual_price.errors else "")) }}
+                            {% for error in form.actual_price.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.commission_rate.label(class="form-label") }}
+                            {{ form.commission_rate(class="form-control" + (" is-invalid" if form.commission_rate.errors else "")) }}
+                            {% for error in form.commission_rate.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.commission_value.label(class="form-label") }}
+                            {{ form.commission_value(class="form-control" + (" is-invalid" if form.commission_value.errors else "")) }}
+                            <div class="form-text">يتم حساب قيمة مبلغ الوساطة تلقائياً = نسبة الوساطة × السعر الفعلي</div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <h5 class="mb-3">تواريخ الأحداث الهامة</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">{{ form.created_at.label(class="form-label") }}{{ form.created_at(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.visit_date.label(class="form-label") }}{{ form.visit_date(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.photo_date.label(class="form-label") }}{{ form.photo_date(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.contract_created_at.label(class="form-label") }}{{ form.contract_created_at(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.ad_license_date.label(class="form-label") }}{{ form.ad_license_date(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.contract_signed_at.label(class="form-label") }}{{ form.contract_signed_at(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.closed_at.label(class="form-label") }}{{ form.closed_at(class="form-control") }}</div>
+                </div>
+                <hr>
+                <h5 class="mb-3">الأحداث الهامة</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">{{ form.event_initial_contact() }} {{ form.event_initial_contact.label }}</div>
+                    <div class="col-md-4">{{ form.event_contract_signed() }} {{ form.event_contract_signed.label }}</div>
+                    <div class="col-md-4">{{ form.event_property_shown() }} {{ form.event_property_shown.label }}</div>
+                    <div class="col-md-4">{{ form.event_meeting_owner() }} {{ form.event_meeting_owner.label }}</div>
+                    <div class="col-md-4">{{ form.event_closed() }} {{ form.event_closed.label }}</div>
+                </div>
+                <hr>
+                <h5 class="mb-3">معلومات العقد</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">{{ form.contract_number.label(class="form-label") }}{{ form.contract_number(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.contract_date.label(class="form-label") }}{{ form.contract_date(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.contract_duration.label(class="form-label") }}{{ form.contract_duration(class="form-control") }}</div>
+                    <div class="col-md-4">{{ form.ad_license_number.label(class="form-label") }}{{ form.ad_license_number(class="form-control") }}</div>
+                </div>
+                <hr>
+                <div class="mb-3">
+                    {{ form.notes.label(class="form-label") }}
+                    {{ form.notes(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>حفظ الصفقة</button>
+                <a href="{{ url_for('client.deal_pipeline') }}" class="btn btn-secondary"><i class="fas fa-arrow-right me-1"></i>إلغاء</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// حساب قيمة مبلغ الوساطة تلقائياً
+function updateCommissionValue() {
+    const actualPrice = parseFloat(document.getElementById('actual_price').value) || 0;
+    const commissionRate = parseFloat(document.getElementById('commission_rate').value) || 0;
+    const commissionValue = (actualPrice * commissionRate / 100).toFixed(2);
+    document.getElementById('commission_value').value = commissionValue;
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const actualPriceInput = document.getElementById('actual_price');
+    const commissionRateInput = document.getElementById('commission_rate');
+    if (actualPriceInput && commissionRateInput) {
+        actualPriceInput.addEventListener('input', updateCommissionValue);
+        commissionRateInput.addEventListener('input', updateCommissionValue);
+        updateCommissionValue();
+    }
+});
+</script>
+{% endblock %}

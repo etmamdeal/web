@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}تواصل معنا - منصة إتمام{% endblock %}
+
+{% block content %}
+<div class="container col-xl-10 col-xxl-8 px-4 py-5">
+    <div class="row align-items-center g-lg-5 py-5">
+        <div class="col-lg-7 text-center text-lg-start">
+            <h1 class="display-4 fw-bold lh-1 mb-3">لديك استفسار؟</h1>
+            <p class="col-lg-10 fs-4">نحن هنا للمساعدة. سواء كان لديك سؤال حول خدماتنا، أو تحتاج إلى دعم فني، أو ترغب في مناقشة حلول مخصصة لشركتك، يرجى ملء النموذج وسيقوم فريقنا بالتواصل معك في أقرب وقت ممكن.</p>
+        </div>
+        <div class="col-md-10 mx-auto col-lg-5">
+            <form class="p-4 p-md-5 border rounded-3 bg-light">
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+                    <label for="floatingInput">البريد الإلكتروني</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="floatingSubject" placeholder="الموضوع">
+                    <label for="floatingSubject">الموضوع</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <textarea class="form-control" placeholder="اكتب رسالتك هنا" id="floatingTextarea" style="height: 100px"></textarea>
+                    <label for="floatingTextarea">الرسالة</label>
+                </div>
+                <button class="w-100 btn btn-lg btn-primary" type="submit">إرسال الرسالة</button>
+                <hr class="my-4">
+                <small class="text-muted">بالنقر على إرسال، فإنك توافق على شروط الاستخدام.</small>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

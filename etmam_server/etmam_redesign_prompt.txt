@@ -1,0 +1,63 @@
+
+Etmam Server - Full UI/UX Redesign Instruction for Cursor AI
+============================================================
+
+Project Summary:
+----------------
+This is a Flask-based SaaS platform called "Etmam Server", used to manage real estate automation scripts. It includes different dashboards for:
+- Super Admin
+- Admin (Manager)
+- Client (User)
+
+Your mission is to redesign the entire frontend UI/UX using the latest design principles, responsive layout, and elegant visual identity in Arabic RTL context.
+
+Visual Identity:
+----------------
+Use the following color palette with creativity and design sense:
+
+- Primary background: #f9f5dd
+- Additional accent colors (for buttons, sections, cards, forms, etc.):
+
+  #7885b7, #b6ccc3, #a5a4bc, #7786dc,
+  #78b492, #60cfa4, #45b092, #cfc9dd,
+  #e6d9ce, #e4f2d6, #d2c382, #fbf3d4,
+  #faf9e9, #f8f9f6, #6ea476, #d5eedb,
+  #dfc9a5, #faf0c4, #efe4ce, #fcf1bc
+
+Design clean, harmonious interfaces using these colors with appropriate contrast, consistency, and sectioning. Don't use all colors at once—select wisely based on context.
+
+Required Tasks:
+---------------
+1. HOMEPAGE + AUTH PAGES (register/login):
+   - Modern layout with central alignment, full responsiveness
+   - Soft background (#f9f5dd), elegant buttons, light card layout
+   - Add `logo.jpg` in the header and also use it as the browser favicon
+   - Mobile-friendly, RTL compatible
+
+2. SUPER ADMIN + ADMIN DASHBOARDS:
+   - Same design language as homepage (professional, clean)
+   - Consistent typography and button styles
+   - Use organized tables and layouts for managing data
+   - Ensure responsive behavior and sidebar/menu usability
+
+3. CLIENT DASHBOARD:
+   - Different visual style: more modern and engaging
+   - Use fresh accents like: #d5eedb, #e4f2d6, #faf0c4, #60cfa4
+   - Design with cards, bigger buttons, and user-friendly layouts
+   - Emphasize ease of navigation and attractive visuals
+
+4. GLOBAL FIXES:
+   - Unify font styles and spacing across all templates
+   - Ensure Favicon is set globally using `logo.jpg`
+   - Clean up unused CSS classes or duplicated style rules
+   - Make all pages fully responsive (Grid/Flexbox preferred)
+
+Optional:
+---------
+Use modern CSS frameworks (Tailwind, Bootstrap 5) if needed, but avoid overcomplication.
+
+Target Audience:
+----------------
+Arabic-speaking users — so prioritize RTL support, visual harmony, and smooth experience.
+
+Let me know if you need to clarify any specific file/component before applying changes.

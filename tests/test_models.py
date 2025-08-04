@@ -10,11 +10,15 @@
 """
 
 import unittest
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from datetime import datetime, timedelta
 # Import create_app and db from run.py, or the relevant app factory pattern
-from run import app, db # Assuming run.py creates the app and db is initialized
+from run import app
+from etmam_server.extensions import db # Assuming run.py creates the app and db is initialized
 # ActivityLog was not in the final models.py, removing its import.
-from models import User, Script, UserScript, RunLog, Role, Permission # Added UserScript
+from etmam_server.models import User, Script, UserScript, RunLog, Role, Permission # Added UserScript
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class TestModels(unittest.TestCase):

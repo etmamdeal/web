@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}مكتبة أدوات التسويق والمنتجات الرقمية{% endblock %}
+
+{% block styles %}
+<style>
+    .tool-section {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.075);
+        margin-bottom: 2rem;
+    }
+    .tool-section h4 {
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: .75rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    .tool-section h4 i {
+        margin-right: 0.75rem;
+    }
+    .tool-section h5 {
+        color: #343a40;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .tool-section p, .tool-section li {
+        color: #495057;
+        line-height: 1.8;
+    }
+    .tool-section .list-group-item {
+        border-color: rgba(0,0,0,0.075);
+    }
+    .example-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        padding: 1rem;
+        border-radius: .25rem;
+        margin-top: .5rem;
+        font-family: 'Courier New', Courier, monospace;
+        white-space: pre-wrap; /* To respect newlines and spacing in examples */
+    }
+    .example-box strong {
+        font-family: var(--bs-body-font-family); /* Revert to default for headings inside example */
+        color: #212529;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="fas fa-bullhorn me-2"></i>مكتبة أدوات التسويق والمنتجات الرقمية</h2>
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white"><i class="fas fa-code me-2"></i>مكتبة السكربتات</div>
+                <div class="card-body">
+                    {% if scripts %}
+                    <div class="row">
+                        {% for script in scripts %}
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title"><i class="fas fa-code me-2 text-primary"></i>{{ script.name }}</h5>
+                                    <p class="card-text text-muted small flex-grow-1">{{ script.description or 'بدون وصف' }}</p>
+                                    <a href="{{ url_for('static', filename=script.file_path) }}" class="btn btn-outline-success w-100 mt-3" download>
+                                        <i class="fas fa-download me-1"></i>تحميل
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">لا توجد سكربتات متاحة حالياً.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white"><i class="fas fa-book-open me-2"></i>مكتبة المنتجات الرقمية</div>
+                <div class="card-body">
+                    {% if products %}
+                    <div class="row">
+                        {% for product in products %}
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <h5 class="card-title">{{ product.name }}</h5>
+                                    <p class="card-text">{{ product.description or 'بدون وصف' }}</p>
+                                    {% if product.type == 'ebook' and product.ebook_details %}
+                                        <a href="{{ url_for('static', filename=product.ebook_details.file_path) }}" class="btn btn-outline-primary w-100 mt-auto" target="_blank">
+                                            <i class="fas fa-book-reader me-1"></i>عرض الكتاب
+                                        </a>
+                                    {% elif product.type == 'database' and product.database_details %}
+                                        <a href="{{ url_for('static', filename=product.database_details.file_path) }}" class="btn btn-outline-secondary w-100 mt-auto" download>
+                                            <i class="fas fa-database me-1"></i>تحميل قاعدة البيانات
+                                        </a>
+                                    {% elif product.type == 'file' and product.image_url %}
+                                        <a href="{{ url_for('static', filename=product.image_url) }}" class="btn btn-outline-dark w-100 mt-auto" download>
+                                            <i class="fas fa-file-alt me-1"></i>تحميل الملف
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">لا يوجد ملف متاح للتحميل.</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">لا توجد منتجات رقمية متاحة حالياً.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

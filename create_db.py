@@ -1,19 +1,25 @@
-from app import app, db
-from models import User
+from etmam_server import create_app, db
+from etmam_server.models import User, Role
+
+app = create_app()
 
 with app.app_context():
-    db.drop_all()  # حذف جميع الجداول الموجودة
-    db.create_all()  # إنشاء جميع الجداول من جديد
+    # حذف جميع الجداول الموجودة
+    db.drop_all()
+    # إنشاء جميع الجداول من جديد
+    db.create_all()
     
     # إنشاء حساب المشرف الافتراضي
     admin = User(
         username='admin',
-        password='admin123',  # تأكد من تغيير كلمة المرور في الإنتاج
+        password='admin123',  # سيتم تشفيرها بواسطة __init__
         full_name='System Administrator',
         email='admin@example.com',
-        is_admin=True
+        role=Role.ADMIN, # استخدام Role enum
+        is_active=True
     )
     db.session.add(admin)
     db.session.commit()
     
-print("تم إعادة تهيئة قاعدة البيانات بنجاح!") 
+print("تم إعادة تهيئة قاعدة البيانات بنجاح!")
+print("Username: admin, Password: admin123") 

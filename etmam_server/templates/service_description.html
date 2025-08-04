@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}خدماتنا - منصة إتمام{% endblock %}
+
+{% block content %}
+<div class="container px-4 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+        <div class="col-10 col-sm-8 col-lg-6">
+            <img src="{{ url_for('static', filename='images/hero.svg') }}" class="d-block mx-lg-auto img-fluid" alt="Bootstrap Themes" width="700" height="500" loading="lazy">
+        </div>
+        <div class="col-lg-6">
+            <h1 class="display-5 fw-bold lh-1 mb-3">منصة إتمام: شريكك الرقمي للنجاح العقاري</h1>
+            <p class="lead">نوفر لك الأدوات والأنظمة التي تحتاجها لإدارة أعمالك العقارية بكفاءة، من تنظيم عروضك ومتابعة صفقاتك، إلى تزويدك بأحدث المواد التسويقية التي تضعك في المقدمة. مهمتنا هي تمكينك من تحقيق أهدافك بأقل جهد وأفضل النتائج.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
+        <div class="feature col">
+            <h3 class="fs-2">إدارة الصفقات</h3>
+            <p>نظام متكامل لمتابعة مراحل الصفقات من البداية وحتى الإغلاق، مما يضمن عدم إغفال أي تفصيل مهم ويزيد من فرص نجاحك.</p>
+        </div>
+        <div class="feature col">
+            <h3 class="fs-2">أدوات تسويق حصرية</h3>
+            <p>احصل على مكتبة متجددة من السكربتات والكتب وقواعد البيانات التي تمكنك من الوصول إلى عملائك المحتملين بفعالية واحترافية.</p>
+        </div>
+        <div class="feature col">
+            <h3 class="fs-2">لوحة تحكم ذكية</h3>
+            <p>واجهة سهلة الاستخدام تمنحك نظرة شاملة على جميع أنشطتك، مع تقارير بسيطة تساعدك على اتخاذ قرارات مدروسة.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.feature-card {
+    padding: 2rem;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+    text-align: center;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.feature-icon i {
+    font-size: 2rem;
+    color: var(--bs-primary);
+}
+
+.script-preview-card {
+    padding: 2rem;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+    text-align: center;
+    height: 100%;
+    border: 1px solid #eee;
+}
+
+.script-preview-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--bs-primary);
+}
+
+.script-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    background: var(--bs-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.script-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.cta-section {
+    background: linear-gradient(45deg, var(--bs-primary), #2980b9);
+    color: white;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+}
+</style>
+{% endblock %}

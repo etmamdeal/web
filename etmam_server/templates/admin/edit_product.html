@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}تعديل المنتج - {{ product.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .form-section {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.075);
+    }
+    .form-section h4 {
+        margin-bottom: 1.5rem;
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: .5rem;
+    }
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-edit text-primary me-2"></i>
+            تعديل المنتج: {{ product.name }}
+            {# Assuming Product model has a helper to get display name for type #}
+            <span class="badge bg-info ms-2">{{ product.get_type_display() if product.get_type_display else product.type }}</span>
+        </h2>
+        <a href="{{ url_for('main.admin_dashboard') if current_user.is_admin and not current_user.is_super_admin else url_for('admin.super_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>العودة إلى لوحة التحكم
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <section class="form-section">
+        <form method="POST" action="{{ url_for('main.edit_product', product_id=product.id) }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="مثال: سكربت تحليل البيانات المتقدم") }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}<span>{{ error }}</span><br>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.price.label(class="form-label") }}
+                        <div class="input-group">
+                            {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else ""), placeholder="مثال: 99.99") }}
+                            <span class="input-group-text">ر.س</span>
+                        </div>
+                        {% if form.price.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.price.errors %}<span>{{ error }}</span><br>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="5", placeholder="وصف تفصيلي للمنتج...") }}
+                {% if form.description.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.description.errors %}<span>{{ error }}</span><br>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            {# Conditionally display script_parameters field #}
+            {% if product.type == ProductType.SCRIPT %}
+                <div class="mb-3">
+                    {{ form.script_parameters.label(class="form-label") }}
+                    {{ form.script_parameters(class="form-control" + (" is-invalid" if form.script_parameters.errors else ""), placeholder='مثال: مفتاح_API، عدد_المحاولات') }}
+                    {% if form.script_parameters.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.script_parameters.errors %}<span>{{ error }}</span><br>{% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.script_parameters.description %}
+                         <small class="form-text text-muted">{{ form.script_parameters.description }}</small>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="mb-4 form-check form-switch">
+                {{ form.is_active(class="form-check-input" + (" is-invalid" if form.is_active.errors else "")) }}
+                {{ form.is_active.label(class="form-check-label") }}
+                {% if form.is_active.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.is_active.errors %}<span>{{ error }}</span><br>{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-4">
+                {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

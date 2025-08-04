@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% import 'components/alerts.html' as alerts %}
+
+{% block title %}تعديل الصفقة{% endblock %}
+
+{% block styles %}
+<style>
+    .form-section {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: .5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.075);
+    }
+    .form-section h4 { /* For consistency if we add a sub-heading inside */
+        margin-bottom: 1.5rem;
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: .75rem;
+    }
+    .form-control-plaintext strong {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ alerts.show_alerts() }}
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-edit me-2"></i>تعديل الصفقة</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.property_id.label(class="form-label") }}
+                    {{ form.property_id(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.client_id.label(class="form-label") }}
+                    {{ form.client_id(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.stage.label(class="form-label") }}
+                    {{ form.stage(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.actual_price.label(class="form-label") }}
+                    {{ form.actual_price(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.commission_value.label(class="form-label") }}
+                    {{ form.commission_value(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.notes.label(class="form-label") }}
+                    {{ form.notes(class="form-control") }}
+                </div>
+                <!-- أضف بقية الحقول حسب الحاجة -->
+                <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>حفظ التعديلات</button>
+                <a href="{{ url_for('client.deal_pipeline') }}" class="btn btn-secondary"><i class="fas fa-arrow-right me-1"></i>إلغاء</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

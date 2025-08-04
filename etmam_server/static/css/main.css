@@ -1,0 +1,394 @@
+@font-face {
+    font-family: 'Questv1';
+    src: url('../fonts/Questv1-Regular.otf') format('opentype');
+}
+
+:root {
+    --background-color: #f9f5dd;
+    --primary-color: #60cfa4;
+    --secondary-color: #4a5a9c; /* A blue derived from logo */
+    --text-color: #333333;
+    --light-gray: #f4f4f4;
+    --white: #ffffff;
+}
+
+body {
+    font-family: 'Questv1', 'Amiri', serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    direction: rtl;
+    margin: 0;
+    line-height: 1.8;
+    font-size: 18px;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header & Navbar */
+.main-header {
+    background: var(--white);
+    padding: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.main-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo img {
+    height: 60px; /* Prominent logo */
+}
+
+.main-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 25px;
+}
+
+.main-nav a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    padding-bottom: 5px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.3s, border-bottom-color 0.3s;
+}
+
+.main-nav a:hover,
+.main-nav a.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.main-nav .nav-button a {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: 5px;
+    border-bottom: none;
+}
+
+.main-nav .nav-button a:hover {
+    background-color: #52b490; /* Darker shade for hover */
+    color: var(--white);
+}
+
+/* Hero Section for Index Page */
+.hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.hero p {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    max-width: 600px;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    text-decoration: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #52b490;
+    transform: translateY(-2px);
+}
+
+/* Forms */
+.form-container {
+    background: var(--white);
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    max-width: 500px;
+    margin: 40px auto;
+}
+
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box; /* Important for width calculation */
+}
+
+/* Content Pages */
+.page-header {
+    background: var(--secondary-color);
+    color: var(--white);
+    padding: 2rem 0;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h1 {
+    font-size: 2.8rem;
+    margin: 0;
+}
+
+.content-section {
+    padding: 40px 0;
+    text-align: center;
+}
+
+/* Footer */
+.main-footer {
+    background-color: var(--text-color);
+    color: var(--white);
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 40px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-header .container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .main-nav ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero p {
+        font-size: 1.2rem;
+    }
+}
+
+/* Custom styles for index.html hero section */
+.hero .hero-title {
+    font-size: 2.2rem;
+    line-height: 1.7;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: normal;
+}
+.hero .hero-image {
+    max-width: 400px;
+    margin: 2rem auto;
+    display: block;
+}
+
+/* Custom styles for index.html features section */
+.features-section h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 40px;
+}
+.features-grid {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    text-align: center;
+    flex-wrap: wrap;
+}
+.feature-item {
+    flex: 1;
+    min-width: 250px;
+}
+.feature-item i {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+.feature-item h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+}
+.feature-item p {
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+/* Pricing Page Styles */
+.section-intro {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 50px auto;
+}
+.pricing-table {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center; /* Align items vertically */
+}
+.pricing-card {
+    background: var(--white);
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    flex: 0 1 320px; /* Flex-grow, flex-shrink, flex-basis */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+}
+.pricing-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.pricing-card.popular {
+    border: 2px solid var(--primary-color);
+    transform: scale(1.05); /* Make it slightly larger */
+}
+.popular-badge {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    position: absolute;
+    top: -15px;
+    right: 20px;
+}
+.pricing-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+.pricing-card .price {
+    font-size: 2.8rem;
+    font-weight: bold;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+.pricing-card .price span {
+    font-size: 1rem;
+    font-weight: normal;
+    color: #777;
+}
+.pricing-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 30px 0;
+    text-align: right;
+}
+.pricing-card ul li {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+.pricing-card ul li i {
+    color: var(--primary-color);
+    margin-left: 10px;
+}
+.pricing-card ul li i.fa-times-circle {
+    color: #ccc;
+}
+.btn-block {
+    width: 100%;
+    display: block;
+}
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+.btn-secondary:hover {
+    background-color: #3e4a86;
+}
+
+/* Register Page Enhancements */
+.register-desc {
+    text-align: center;
+    color: var(--secondary-color);
+    font-size: 1.1rem;
+    margin-top: 10px;
+    margin-bottom: 30px;
+}
+.register-form-container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 32px 24px 24px 24px;
+}
+.input-icon {
+    position: relative;
+}
+.input-icon input {
+    padding-right: 38px;
+}
+.input-icon i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+.btn-register {
+    font-size: 1.15rem;
+    padding: 14px 0;
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.register-login-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 1rem;
+}
+@media (max-width: 600px) {
+    .register-form-container {
+        padding: 18px 6px 12px 6px;
+    }
+    .page-header h1 {
+        font-size: 1.3rem !important;
+    }
+} 

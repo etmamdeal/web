@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}تفاصيل الصفقة{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-eye me-2"></i>تفاصيل الصفقة</h4>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">العقار</dt>
+                <dd class="col-sm-9">{{ deal.property.title if deal.property else '-' }}</dd>
+                <dt class="col-sm-3">العميل</dt>
+                <dd class="col-sm-9">{{ deal.client.full_name if deal.client else deal.client_name }}</dd>
+                <dt class="col-sm-3">المرحلة</dt>
+                <dd class="col-sm-9">{{ deal.stage }}</dd>
+                <dt class="col-sm-3">السعر الفعلي</dt>
+                <dd class="col-sm-9">{{ deal.actual_price or '-' }} ر.س</dd>
+                <dt class="col-sm-3">مبلغ الوساطة</dt>
+                <dd class="col-sm-9">{{ deal.commission_value or '-' }} ر.س</dd>
+                <dt class="col-sm-3">تاريخ الإنشاء</dt>
+                <dd class="col-sm-9">{{ deal.created_at.strftime('%Y-%m-%d') if deal.created_at else '-' }}</dd>
+                <dt class="col-sm-3">ملاحظات</dt>
+                <dd class="col-sm-9">{{ deal.notes or '-' }}</dd>
+                <dt class="col-sm-3">أحداث هامة</dt>
+                <dd class="col-sm-9">
+                    <ul>
+                        <li>تواصل أولي: {{ '✔️' if deal.event_initial_contact else '❌' }}</li>
+                        <li>توقيع العقد: {{ '✔️' if deal.event_contract_signed else '❌' }}</li>
+                        <li>معاينة العقار: {{ '✔️' if deal.event_property_shown else '❌' }}</li>
+                        <li>اجتماع مع المالك: {{ '✔️' if deal.event_meeting_owner else '❌' }}</li>
+                        <li>إغلاق الصفقة: {{ '✔️' if deal.event_closed else '❌' }}</li>
+                    </ul>
+                </dd>
+            </dl>
+            <a href="{{ url_for('client.deal_pipeline') }}" class="btn btn-secondary"><i class="fas fa-arrow-right me-1"></i>عودة</a>
+            <a href="{{ url_for('client.edit_deal', deal_id=deal.id) }}" class="btn btn-primary"><i class="fas fa-edit me-1"></i>تعديل الصفقة</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
